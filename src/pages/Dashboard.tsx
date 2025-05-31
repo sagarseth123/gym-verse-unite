@@ -1,0 +1,137 @@
+
+import { useAuth } from '@/hooks/useAuth';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { 
+  Dumbbell, 
+  Target, 
+  TrendingUp, 
+  Calendar,
+  MapPin,
+  ShoppingCart
+} from 'lucide-react';
+
+export default function Dashboard() {
+  const { profile } = useAuth();
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">
+          Welcome back, {profile?.full_name || 'there'}!
+        </h1>
+        <p className="text-gray-600 mt-2">
+          Ready to crush your fitness goals today?
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Today's Workout</CardTitle>
+            <Dumbbell className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">Push Day</div>
+            <p className="text-xs text-muted-foreground">
+              Chest, Shoulders, Triceps
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Weekly Progress</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">4/5</div>
+            <p className="text-xs text-muted-foreground">
+              Workouts completed this week
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Current Goal</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">Muscle Gain</div>
+            <p className="text-xs text-muted-foreground">
+              75% progress to target
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>
+              Get started with your fitness journey
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 gap-4">
+            <Button asChild className="h-20 flex-col">
+              <Link to="/explore">
+                <Dumbbell className="h-6 w-6 mb-2" />
+                Browse Exercises
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="h-20 flex-col">
+              <Link to="/explore">
+                <Calendar className="h-6 w-6 mb-2" />
+                Plan Workout
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="h-20 flex-col">
+              <Link to="/explore">
+                <MapPin className="h-6 w-6 mb-2" />
+                Find Gyms
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="h-20 flex-col">
+              <Link to="/shop">
+                <ShoppingCart className="h-6 w-6 mb-2" />
+                Shop Products
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Fitness Recommendations</CardTitle>
+            <CardDescription>
+              Based on your goals and progress
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-4 border rounded-lg">
+              <h4 className="font-medium">Increase Protein Intake</h4>
+              <p className="text-sm text-gray-600">
+                Consider adding more protein to support muscle growth
+              </p>
+            </div>
+            <div className="p-4 border rounded-lg">
+              <h4 className="font-medium">Progressive Overload</h4>
+              <p className="text-sm text-gray-600">
+                Time to increase weights for better strength gains
+              </p>
+            </div>
+            <div className="p-4 border rounded-lg">
+              <h4 className="font-medium">Rest Day Reminder</h4>
+              <p className="text-sm text-gray-600">
+                Don't forget to schedule rest days for recovery
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
