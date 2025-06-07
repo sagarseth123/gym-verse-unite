@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { Navigation } from "@/components/layout/Navigation";
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
 import Explore from "./pages/Explore";
 import Shop from "./pages/Shop";
 import NotFound from "./pages/NotFound";
@@ -51,13 +52,13 @@ function AppContent() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/explore" element={<Explore />} />
           <Route path="/shop" element={<Shop />} />
-          <Route path="/profile" element={<div className="container mx-auto px-4 py-8">Profile Page Coming Soon</div>} />
+          <Route path="/profile" element={<Profile />} />
           
           {/* Admin Routes - will be expanded later */}
           <Route path="/admin/dashboard" element={<div className="container mx-auto px-4 py-8">Admin Dashboard Coming Soon</div>} />
           <Route path="/admin/gym" element={<div className="container mx-auto px-4 py-8">Gym Management Coming Soon</div>} />
           <Route path="/admin/subscribers" element={<div className="container mx-auto px-4 py-8">Subscribers Coming Soon</div>} />
-          <Route path="/admin/profile" element={<div className="container mx-auto px-4 py-8">Admin Profile Coming Soon</div>} />
+          <Route path="/admin/profile" element={<Profile />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

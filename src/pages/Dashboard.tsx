@@ -1,8 +1,10 @@
-
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useProfileStatus } from '@/hooks/useProfileStatus';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { ProfileCompletionAlert } from '@/components/ProfileCompletionAlert';
 import { 
   Dumbbell, 
   Target, 
@@ -14,6 +16,23 @@ import {
 
 export default function Dashboard() {
   const { profile } = useAuth();
+  const { isProfileComplete, loading } = useProfileStatus();
+  const [showProfileAlert, setShowProfileAlert] = useState(false);
+
+  useEffect(() => {
+    if (!loading && !isProfileComplete) {
+      // Check if user has dismissed the alert before
+      const dismissed = localStorage.getItem('profileAlertDismissed');
+      if (!dismissed) {
+        setShowProfileAlert(true);
+      }
+    }
+  }, [loading, isProfileComplete]);
+
+  const handleDismissAlert = () => {
+    setShowProfileAlert(false);
+    localStorage.setItem('profileAlertDismissed', 'true');
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -25,6 +44,10 @@ export default function Dashboard() {
           Ready to crush your fitness goals today?
         </p>
       </div>
+
+      {showProfileAlert && (
+        <ProfileCompletionAlert onDismiss={handleDismissAlert} />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <Card>

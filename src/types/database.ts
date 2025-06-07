@@ -18,6 +18,20 @@ export interface Profile {
   updated_at: string;
 }
 
+export interface GymUserProfile {
+  id: string;
+  bmi?: number;
+  current_gym_id?: string;
+  fitness_goals?: FitnessGoal[];
+  fitness_level?: string;
+  height?: number;
+  medical_conditions?: string[];
+  preferred_training_types?: TrainingType[];
+  weight?: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Gym {
   id: string;
   admin_id: string;
