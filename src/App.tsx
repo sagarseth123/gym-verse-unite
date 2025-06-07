@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { Navigation } from "@/components/layout/Navigation";
+import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
+import { useProfileStatus } from "@/hooks/useProfileStatus";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Explore from "./pages/Explore";
@@ -14,6 +16,39 @@ import Shop from "./pages/Shop";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+function OnboardingWrapper({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const { isProfileComplete, loading } = useProfileStatus();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show onboarding if profile is not complete
+  if (!isProfileComplete && user) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <OnboardingFlow 
+          onComplete={() => window.location.reload()} 
+          onSkip={() => {
+            localStorage.setItem('onboardingSkipped', 'true');
+            window.location.reload();
+          }} 
+        />
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -33,7 +68,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <AuthForm />;
   }
   
-  return <>{children}</>;
+  return (
+    <OnboardingWrapper>
+      {children}
+    </OnboardingWrapper>
+  );
 }
 
 function AppContent() {

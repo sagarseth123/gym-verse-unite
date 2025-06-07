@@ -17,6 +17,14 @@ export function useProfileStatus() {
         return;
       }
 
+      // Check if user has skipped onboarding
+      const hasSkipped = localStorage.getItem('onboardingSkipped') === 'true';
+      if (hasSkipped) {
+        setIsProfileComplete(true);
+        setLoading(false);
+        return;
+      }
+
       // Check if basic profile info is complete
       const hasBasicInfo = !!(
         profile.full_name &&
@@ -25,11 +33,15 @@ export function useProfileStatus() {
       );
 
       // Fetch gym profile
-      const { data: gymData } = await supabase
+      const { data: gymData, error } = await supabase
         .from('gym_user_profiles')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching gym profile:', error);
+      }
 
       setGymProfile(gymData);
 

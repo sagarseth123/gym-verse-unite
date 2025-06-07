@@ -23,7 +23,8 @@ export default function Dashboard() {
     if (!loading && !isProfileComplete) {
       // Check if user has dismissed the alert before
       const dismissed = localStorage.getItem('profileAlertDismissed');
-      if (!dismissed) {
+      const skipped = localStorage.getItem('onboardingSkipped');
+      if (!dismissed && !skipped) {
         setShowProfileAlert(true);
       }
     }
@@ -33,6 +34,17 @@ export default function Dashboard() {
     setShowProfileAlert(false);
     localStorage.setItem('profileAlertDismissed', 'true');
   };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">

@@ -32,9 +32,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('id', userId)
         .single();
 
-      if (profileError) {
+      if (profileError && profileError.code !== 'PGRST116') {
         console.error('Error loading profile:', profileError);
-      } else {
+      } else if (profileData) {
         setProfile(profileData);
       }
 
@@ -46,9 +46,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .eq('id', userId)
           .single();
 
-        if (gymError) {
+        if (gymError && gymError.code !== 'PGRST116') {
           console.error('Error loading gym profile:', gymError);
-        } else {
+        } else if (gymData) {
           setGymProfile(gymData);
         }
       }
@@ -61,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshProfile = async () => {
     if (user) {
+      setLoading(true);
       await loadUserProfile(user.id);
     }
   };
@@ -81,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       
