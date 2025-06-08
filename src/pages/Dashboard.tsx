@@ -69,12 +69,10 @@ export default function Dashboard() {
   // Show onboarding flow if requested
   if (showOnboarding) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <OnboardingFlow 
-          onComplete={handleCompleteOnboarding}
-          onSkip={handleSkipOnboarding}
-        />
-      </div>
+      <OnboardingFlow 
+        onComplete={handleCompleteOnboarding}
+        onSkip={handleSkipOnboarding}
+      />
     );
   }
 
@@ -90,14 +88,10 @@ export default function Dashboard() {
       </div>
 
       {showProfileAlert && (
-        <div className="mb-6">
-          <ProfileCompletionAlert onDismiss={handleDismissAlert} />
-          <div className="mt-3">
-            <Button onClick={handleStartOnboarding} className="mr-2">
-              Complete Profile Now
-            </Button>
-          </div>
-        </div>
+        <ProfileCompletionAlert 
+          onDismiss={handleDismissAlert}
+          onStartOnboarding={handleStartOnboarding}
+        />
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">

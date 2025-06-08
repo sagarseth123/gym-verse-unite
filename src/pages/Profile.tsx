@@ -10,12 +10,23 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from '@/hooks/use-toast';
-import { Edit2, Save, X, User, Activity, Target, MapPin } from 'lucide-react';
+import { 
+  Edit2, 
+  Save, 
+  X, 
+  User, 
+  Activity, 
+  Target, 
+  MapPin, 
+  AlertCircle,
+  CheckCircle
+} from 'lucide-react';
 import { Profile as ProfileType, GymUserProfile, FitnessGoal, TrainingType } from '@/types/database';
 
 export default function Profile() {
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, refreshProfile } = useAuth();
   const [gymProfile, setGymProfile] = useState<GymUserProfile | null>(null);
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -63,6 +74,32 @@ export default function Profile() {
     { value: 'cycling', label: 'Cycling' }
   ];
 
+  // Check profile completion status
+  const getProfileCompletionStatus = () => {
+    if (!profile) return { isComplete: false, missingFields: [] };
+    
+    const missingFields = [];
+    
+    // Basic info
+    if (!profile.full_name) missingFields.push('Full Name');
+    if (!profile.phone) missingFields.push('Phone Number');
+    if (!profile.address) missingFields.push('Address');
+    
+    // For gym users, check fitness info
+    if (profile.user_role === 'gym_user') {
+      if (!gymProfile?.weight) missingFields.push('Weight');
+      if (!gymProfile?.height) missingFields.push('Height');
+      if (!gymProfile?.fitness_level) missingFields.push('Fitness Level');
+      if (!gymProfile?.fitness_goals?.length) missingFields.push('Fitness Goals');
+    }
+    
+    return {
+      isComplete: missingFields.length === 0,
+      missingFields,
+      completionPercentage: Math.round(((10 - missingFields.length) / 10) * 100)
+    };
+  };
+
   useEffect(() => {
     if (profile) {
       console.log('Setting personal data from profile:', profile);
@@ -79,9 +116,7 @@ export default function Profile() {
 
   useEffect(() => {
     const fetchGymProfile = async () => {
-      if (!user || authLoading) {
-        return;
-      }
+      if (!user || authLoading) return;
 
       console.log('Fetching gym profile for user:', user.id);
       setPageLoading(true);
@@ -143,6 +178,8 @@ export default function Profile() {
 
       if (error) throw error;
 
+      await refreshProfile();
+      
       toast({
         title: "Personal information updated!",
         description: "Your personal details have been saved.",
@@ -286,12 +323,45 @@ export default function Profile() {
     );
   }
 
+  const completionStatus = getProfileCompletionStatus();
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
         <p className="text-gray-600 mt-2">Manage your personal information and fitness preferences</p>
       </div>
+
+      {/* Profile Completion Status */}
+      {profile.user_role === 'gym_user' && (
+        <div className="mb-6">
+          {!completionStatus.isComplete ? (
+            <Alert className="border-orange-200 bg-orange-50">
+              <AlertCircle className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-800">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="font-medium">Profile {completionStatus.completionPercentage}% Complete</span>
+                    <p className="text-sm mt-1">
+                      Missing: {completionStatus.missingFields.join(', ')}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold">{completionStatus.completionPercentage}%</div>
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert className="border-green-200 bg-green-50">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                <span className="font-medium">Profile Complete!</span> You're all set to get personalized recommendations.
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+      )}
 
       <div className="space-y-6">
         {/* Personal Information */}
@@ -420,6 +490,7 @@ export default function Profile() {
         {/* Only show fitness sections for gym users */}
         {profile.user_role === 'gym_user' && (
           <>
+            {/* Fitness Information */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -555,6 +626,7 @@ export default function Profile() {
               </CardContent>
             </Card>
 
+            {/* Goals & Preferences */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
