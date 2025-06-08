@@ -16,6 +16,7 @@ export function useProfileStatus() {
       
       // Wait for auth to finish loading
       if (authLoading) {
+        console.log('Auth still loading, waiting...');
         return;
       }
 
@@ -36,9 +37,9 @@ export function useProfileStatus() {
           return;
         }
 
-        // Check if user is admin (admins don't need to complete profiles)
-        if (profile.user_role === 'admin' || profile.user_role === 'gym_owner') {
-          console.log('User is admin/gym_owner, skipping profile completion check');
+        // Check if user is gym admin (gym admins don't need to complete profiles)
+        if (profile.user_role === 'gym_admin') {
+          console.log('User is gym_admin, skipping profile completion check');
           setIsProfileComplete(true);
           setLoading(false);
           return;
