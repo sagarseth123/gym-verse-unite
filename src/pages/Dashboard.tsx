@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfileStatus } from '@/hooks/useProfileStatus';
@@ -6,13 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { ProfileCompletionAlert } from '@/components/ProfileCompletionAlert';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
+import { AIFitnessPlanner } from '@/components/AIFitnessPlanner';
 import { 
   Dumbbell, 
   Target, 
   TrendingUp, 
   Calendar,
   MapPin,
-  ShoppingCart
+  ShoppingCart,
+  Brain
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -20,6 +23,7 @@ export default function Dashboard() {
   const { isProfileComplete, loading } = useProfileStatus();
   const [showProfileAlert, setShowProfileAlert] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showAIPlanner, setShowAIPlanner] = useState(false);
 
   console.log('Dashboard - profile:', profile?.user_role, 'isProfileComplete:', isProfileComplete, 'loading:', loading);
 
@@ -73,6 +77,28 @@ export default function Dashboard() {
         onComplete={handleCompleteOnboarding}
         onSkip={handleSkipOnboarding}
       />
+    );
+  }
+
+  // Show AI Planner if requested
+  if (showAIPlanner) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <Button 
+            variant="outline" 
+            onClick={() => setShowAIPlanner(false)}
+            className="mb-4"
+          >
+            ← Back to Dashboard
+          </Button>
+          <h1 className="text-3xl font-bold text-gray-900">AI Fitness Planner</h1>
+          <p className="text-gray-600 mt-2">
+            Get personalized diet and exercise recommendations powered by AI
+          </p>
+        </div>
+        <AIFitnessPlanner />
+      </div>
     );
   }
 
@@ -144,6 +170,13 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-4">
+            <Button 
+              onClick={() => setShowAIPlanner(true)}
+              className="h-20 flex-col bg-purple-600 hover:bg-purple-700"
+            >
+              <Brain className="h-6 w-6 mb-2" />
+              AI Fitness Plan
+            </Button>
             <Button asChild className="h-20 flex-col">
               <Link to="/explore">
                 <Dumbbell className="h-6 w-6 mb-2" />
@@ -180,10 +213,18 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="p-4 border rounded-lg">
-              <h4 className="font-medium">Increase Protein Intake</h4>
+              <h4 className="font-medium">Try AI Fitness Planning</h4>
               <p className="text-sm text-gray-600">
-                Consider adding more protein to support muscle growth
+                Get personalized diet and exercise plans powered by AI
               </p>
+              <Button 
+                size="sm" 
+                className="mt-2 bg-purple-600 hover:bg-purple-700"
+                onClick={() => setShowAIPlanner(true)}
+              >
+                <Brain className="h-4 w-4 mr-2" />
+                Generate Plan
+              </Button>
             </div>
             <div className="p-4 border rounded-lg">
               <h4 className="font-medium">Progressive Overload</h4>
