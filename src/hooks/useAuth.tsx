@@ -31,10 +31,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .maybeSingle();
+        .single();
 
-      if (profileError && profileError.code !== 'PGRST116') {
+      if (profileError) {
         console.error('Error loading profile:', profileError);
+        // If profile doesn't exist, create one
+        if (profileError.code === 'PGRST116') {
+          console.log('Profile not found, creating new profile');
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              id: userId,
+              email: session?.user?.email || '',
+              user_role: 'gym_user'
+            })
+            .select()
+            .single();
+
+          if (createError) {
+            console.error('Error creating profile:', createError);
+          } else {
+            console.log('Profile created:', newProfile);
+            setProfile(newProfile);
+          }
+        }
       } else if (profileData) {
         console.log('Profile loaded:', profileData);
         setProfile(profileData);
@@ -45,10 +65,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .from('gym_user_profiles')
             .select('*')
             .eq('id', userId)
-            .maybeSingle();
+            .single();
 
-          if (gymError && gymError.code !== 'PGRST116') {
-            console.error('Error loading gym profile:', gymError);
+          if (gymError) {
+            if (gymError.code === 'PGRST116') {
+              console.log('Gym profile not found, creating new gym profile');
+              const { data: newGymProfile, error: createGymError } = await supabase
+                .from('gym_user_profiles')
+                .insert({ id: userId })
+                .select()
+                .single();
+
+              if (createGymError) {
+                console.error('Error creating gym profile:', createGymError);
+              } else {
+                console.log('Gym profile created:', newGymProfile);
+                setGymProfile(newGymProfile);
+              }
+            } else {
+              console.error('Error loading gym profile:', gymError);
+            }
           } else if (gymData) {
             console.log('Gym profile loaded:', gymData);
             setGymProfile(gymData);
@@ -56,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error) {
-      console.error('Error loading profile:', error);
+      console.error('Error in loadUserProfile:', error);
     } finally {
       setLoading(false);
     }
@@ -93,10 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        // Use setTimeout to avoid potential deadlocks
-        setTimeout(() => {
-          loadUserProfile(session.user.id);
-        }, 0);
+        await loadUserProfile(session.user.id);
       } else {
         setProfile(null);
         setGymProfile(null);
