@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,10 +15,11 @@ import { Edit2, Save, X, User, Activity, Target, MapPin } from 'lucide-react';
 import { Profile as ProfileType, GymUserProfile, FitnessGoal, TrainingType } from '@/types/database';
 
 export default function Profile() {
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const [gymProfile, setGymProfile] = useState<GymUserProfile | null>(null);
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   
   const [personalData, setPersonalData] = useState({
     full_name: '',
@@ -65,6 +65,7 @@ export default function Profile() {
 
   useEffect(() => {
     if (profile) {
+      console.log('Setting personal data from profile:', profile);
       setPersonalData({
         full_name: profile.full_name || '',
         phone: profile.phone || '',
@@ -78,34 +79,45 @@ export default function Profile() {
 
   useEffect(() => {
     const fetchGymProfile = async () => {
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('gym_user_profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching gym profile:', error);
+      if (!user || authLoading) {
         return;
       }
 
-      setGymProfile(data);
-      setFitnessData({
-        weight: data.weight?.toString() || '',
-        height: data.height?.toString() || '',
-        fitness_level: data.fitness_level || '',
-        medical_conditions: data.medical_conditions || []
-      });
-      setGoalsData({
-        fitness_goals: data.fitness_goals || [],
-        preferred_training_types: data.preferred_training_types || []
-      });
+      console.log('Fetching gym profile for user:', user.id);
+      setPageLoading(true);
+
+      try {
+        const { data, error } = await supabase
+          .from('gym_user_profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching gym profile:', error);
+        } else if (data) {
+          console.log('Gym profile fetched:', data);
+          setGymProfile(data);
+          setFitnessData({
+            weight: data.weight?.toString() || '',
+            height: data.height?.toString() || '',
+            fitness_level: data.fitness_level || '',
+            medical_conditions: data.medical_conditions || []
+          });
+          setGoalsData({
+            fitness_goals: data.fitness_goals || [],
+            preferred_training_types: data.preferred_training_types || []
+          });
+        }
+      } catch (error) {
+        console.error('Error in fetchGymProfile:', error);
+      } finally {
+        setPageLoading(false);
+      }
     };
 
     fetchGymProfile();
-  }, [user]);
+  }, [user, authLoading]);
 
   const calculateBMI = (weight: number, height: number): number => {
     const heightInMeters = height / 100;
@@ -253,10 +265,23 @@ export default function Profile() {
     }));
   };
 
+  if (authLoading || pageLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!profile) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="text-center">Loading profile...</div>
+        <div className="text-center">
+          <p className="text-gray-600">Profile not found. Please try refreshing the page.</p>
+        </div>
       </div>
     );
   }
@@ -392,243 +417,246 @@ export default function Profile() {
           </CardContent>
         </Card>
 
-        {/* Fitness Information */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Activity className="h-5 w-5 text-green-600" />
-                <CardTitle>Fitness Information</CardTitle>
-              </div>
-              {editingSection !== 'fitness' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditingSection('fitness')}
-                >
-                  <Edit2 className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            {editingSection === 'fitness' ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="weight">Weight (kg)</Label>
-                    <Input
-                      id="weight"
-                      type="number"
-                      value={fitnessData.weight}
-                      onChange={(e) => setFitnessData(prev => ({ ...prev, weight: e.target.value }))}
-                    />
+        {/* Only show fitness sections for gym users */}
+        {profile.user_role === 'gym_user' && (
+          <>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Activity className="h-5 w-5 text-green-600" />
+                    <CardTitle>Fitness Information</CardTitle>
                   </div>
-                  <div>
-                    <Label htmlFor="height">Height (cm)</Label>
-                    <Input
-                      id="height"
-                      type="number"
-                      value={fitnessData.height}
-                      onChange={(e) => setFitnessData(prev => ({ ...prev, height: e.target.value }))}
-                    />
-                  </div>
+                  {editingSection !== 'fitness' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingSection('fitness')}
+                    >
+                      <Edit2 className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                  )}
                 </div>
-                
-                <div>
-                  <Label>Fitness Level</Label>
-                  <RadioGroup
-                    value={fitnessData.fitness_level}
-                    onValueChange={(value) => setFitnessData(prev => ({ ...prev, fitness_level: value }))}
-                    className="mt-2"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="beginner" id="beginner" />
-                      <Label htmlFor="beginner">Beginner</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="intermediate" id="intermediate" />
-                      <Label htmlFor="intermediate">Intermediate</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="advanced" id="advanced" />
-                      <Label htmlFor="advanced">Advanced</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                <div>
-                  <Label>Medical Conditions</Label>
-                  <Textarea
-                    value={fitnessData.medical_conditions.join(', ')}
-                    onChange={(e) => setFitnessData(prev => ({ 
-                      ...prev, 
-                      medical_conditions: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
-                    }))}
-                    placeholder="List any medical conditions (comma separated)"
-                    className="mt-2"
-                  />
-                </div>
-
-                <div className="flex space-x-2">
-                  <Button onClick={handleSaveFitness} disabled={isLoading}>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save
-                  </Button>
-                  <Button variant="outline" onClick={() => setEditingSection(null)}>
-                    <X className="h-4 w-4 mr-2" />
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Weight</p>
-                    <p className="font-medium">{gymProfile?.weight ? `${gymProfile.weight} kg` : 'Not provided'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Height</p>
-                    <p className="font-medium">{gymProfile?.height ? `${gymProfile.height} cm` : 'Not provided'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">BMI</p>
-                    {gymProfile?.bmi ? (
+              </CardHeader>
+              <CardContent>
+                {editingSection === 'fitness' ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <p className="font-medium">{gymProfile.bmi.toFixed(1)}</p>
-                        <Badge variant="outline" className="text-xs">
-                          {getBMICategory(gymProfile.bmi)}
-                        </Badge>
+                        <Label htmlFor="weight">Weight (kg)</Label>
+                        <Input
+                          id="weight"
+                          type="number"
+                          value={fitnessData.weight}
+                          onChange={(e) => setFitnessData(prev => ({ ...prev, weight: e.target.value }))}
+                        />
                       </div>
-                    ) : (
-                      <p className="font-medium">Not calculated</p>
+                      <div>
+                        <Label htmlFor="height">Height (cm)</Label>
+                        <Input
+                          id="height"
+                          type="number"
+                          value={fitnessData.height}
+                          onChange={(e) => setFitnessData(prev => ({ ...prev, height: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label>Fitness Level</Label>
+                      <RadioGroup
+                        value={fitnessData.fitness_level}
+                        onValueChange={(value) => setFitnessData(prev => ({ ...prev, fitness_level: value }))}
+                        className="mt-2"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="beginner" id="beginner" />
+                          <Label htmlFor="beginner">Beginner</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="intermediate" id="intermediate" />
+                          <Label htmlFor="intermediate">Intermediate</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="advanced" id="advanced" />
+                          <Label htmlFor="advanced">Advanced</Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+
+                    <div>
+                      <Label>Medical Conditions</Label>
+                      <Textarea
+                        value={fitnessData.medical_conditions.join(', ')}
+                        onChange={(e) => setFitnessData(prev => ({ 
+                          ...prev, 
+                          medical_conditions: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
+                        }))}
+                        placeholder="List any medical conditions (comma separated)"
+                        className="mt-2"
+                      />
+                    </div>
+
+                    <div className="flex space-x-2">
+                      <Button onClick={handleSaveFitness} disabled={isLoading}>
+                        <Save className="h-4 w-4 mr-2" />
+                        Save
+                      </Button>
+                      <Button variant="outline" onClick={() => setEditingSection(null)}>
+                        <X className="h-4 w-4 mr-2" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Weight</p>
+                        <p className="font-medium">{gymProfile?.weight ? `${gymProfile.weight} kg` : 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Height</p>
+                        <p className="font-medium">{gymProfile?.height ? `${gymProfile.height} cm` : 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">BMI</p>
+                        {gymProfile?.bmi ? (
+                          <div>
+                            <p className="font-medium">{gymProfile.bmi.toFixed(1)}</p>
+                            <Badge variant="outline" className="text-xs">
+                              {getBMICategory(gymProfile.bmi)}
+                            </Badge>
+                          </div>
+                        ) : (
+                          <p className="font-medium">Not calculated</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <p className="text-sm text-gray-600">Fitness Level</p>
+                      <p className="font-medium capitalize">{gymProfile?.fitness_level || 'Not provided'}</p>
+                    </div>
+
+                    {gymProfile?.medical_conditions && gymProfile.medical_conditions.length > 0 && (
+                      <div>
+                        <p className="text-sm text-gray-600">Medical Conditions</p>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {gymProfile.medical_conditions.map((condition, index) => (
+                            <Badge key={index} variant="outline">{condition}</Badge>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-gray-600">Fitness Level</p>
-                  <p className="font-medium capitalize">{gymProfile?.fitness_level || 'Not provided'}</p>
-                </div>
+                )}
+              </CardContent>
+            </Card>
 
-                {gymProfile?.medical_conditions && gymProfile.medical_conditions.length > 0 && (
-                  <div>
-                    <p className="text-sm text-gray-600">Medical Conditions</p>
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {gymProfile.medical_conditions.map((condition, index) => (
-                        <Badge key={index} variant="outline">{condition}</Badge>
-                      ))}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Target className="h-5 w-5 text-purple-600" />
+                    <CardTitle>Goals & Preferences</CardTitle>
+                  </div>
+                  {editingSection !== 'goals' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingSection('goals')}
+                    >
+                      <Edit2 className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {editingSection === 'goals' ? (
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-base font-medium">Fitness Goals</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
+                        {fitnessGoalOptions.map((goal) => (
+                          <div key={goal.value} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={goal.value}
+                              checked={goalsData.fitness_goals.includes(goal.value)}
+                              onCheckedChange={() => handleGoalToggle(goal.value)}
+                            />
+                            <Label htmlFor={goal.value} className="text-sm">{goal.label}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-base font-medium">Preferred Training Types</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
+                        {trainingTypeOptions.map((type) => (
+                          <div key={type.value} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={type.value}
+                              checked={goalsData.preferred_training_types.includes(type.value)}
+                              onCheckedChange={() => handleTrainingTypeToggle(type.value)}
+                            />
+                            <Label htmlFor={type.value} className="text-sm">{type.label}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex space-x-2">
+                      <Button onClick={handleSaveGoals} disabled={isLoading}>
+                        <Save className="h-4 w-4 mr-2" />
+                        Save
+                      </Button>
+                      <Button variant="outline" onClick={() => setEditingSection(null)}>
+                        <X className="h-4 w-4 mr-2" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Fitness Goals</p>
+                      {gymProfile?.fitness_goals && gymProfile.fitness_goals.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {gymProfile.fitness_goals.map((goal) => (
+                            <Badge key={goal} variant="default">
+                              {fitnessGoalOptions.find(g => g.value === goal)?.label || goal}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500">No goals set</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Preferred Training Types</p>
+                      {gymProfile?.preferred_training_types && gymProfile.preferred_training_types.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {gymProfile.preferred_training_types.map((type) => (
+                            <Badge key={type} variant="secondary">
+                              {trainingTypeOptions.find(t => t.value === type)?.label || type}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500">No preferences set</p>
+                      )}
                     </div>
                   </div>
                 )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Goals & Preferences */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Target className="h-5 w-5 text-purple-600" />
-                <CardTitle>Goals & Preferences</CardTitle>
-              </div>
-              {editingSection !== 'goals' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditingSection('goals')}
-                >
-                  <Edit2 className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            {editingSection === 'goals' ? (
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-base font-medium">Fitness Goals</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
-                    {fitnessGoalOptions.map((goal) => (
-                      <div key={goal.value} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={goal.value}
-                          checked={goalsData.fitness_goals.includes(goal.value)}
-                          onCheckedChange={() => handleGoalToggle(goal.value)}
-                        />
-                        <Label htmlFor={goal.value} className="text-sm">{goal.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-base font-medium">Preferred Training Types</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
-                    {trainingTypeOptions.map((type) => (
-                      <div key={type.value} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={type.value}
-                          checked={goalsData.preferred_training_types.includes(type.value)}
-                          onCheckedChange={() => handleTrainingTypeToggle(type.value)}
-                        />
-                        <Label htmlFor={type.value} className="text-sm">{type.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex space-x-2">
-                  <Button onClick={handleSaveGoals} disabled={isLoading}>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save
-                  </Button>
-                  <Button variant="outline" onClick={() => setEditingSection(null)}>
-                    <X className="h-4 w-4 mr-2" />
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">Fitness Goals</p>
-                  {gymProfile?.fitness_goals && gymProfile.fitness_goals.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {gymProfile.fitness_goals.map((goal) => (
-                        <Badge key={goal} variant="default">
-                          {fitnessGoalOptions.find(g => g.value === goal)?.label || goal}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500">No goals set</p>
-                  )}
-                </div>
-
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">Preferred Training Types</p>
-                  {gymProfile?.preferred_training_types && gymProfile.preferred_training_types.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {gymProfile.preferred_training_types.map((type) => (
-                        <Badge key={type} variant="secondary">
-                          {trainingTypeOptions.find(t => t.value === type)?.label || type}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500">No preferences set</p>
-                  )}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </div>
   );

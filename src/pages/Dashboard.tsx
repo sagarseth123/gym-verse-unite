@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { ProfileCompletionAlert } from '@/components/ProfileCompletionAlert';
+import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { 
   Dumbbell, 
   Target, 
@@ -18,9 +19,12 @@ export default function Dashboard() {
   const { profile } = useAuth();
   const { isProfileComplete, loading } = useProfileStatus();
   const [showProfileAlert, setShowProfileAlert] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  console.log('Dashboard - profile:', profile?.user_role, 'isProfileComplete:', isProfileComplete, 'loading:', loading);
 
   useEffect(() => {
-    if (!loading && !isProfileComplete) {
+    if (!loading && !isProfileComplete && profile?.user_role === 'gym_user') {
       // Check if user has dismissed the alert before
       const dismissed = localStorage.getItem('profileAlertDismissed');
       const skipped = localStorage.getItem('onboardingSkipped');
@@ -28,11 +32,27 @@ export default function Dashboard() {
         setShowProfileAlert(true);
       }
     }
-  }, [loading, isProfileComplete]);
+  }, [loading, isProfileComplete, profile?.user_role]);
 
   const handleDismissAlert = () => {
     setShowProfileAlert(false);
     localStorage.setItem('profileAlertDismissed', 'true');
+  };
+
+  const handleStartOnboarding = () => {
+    setShowOnboarding(true);
+    setShowProfileAlert(false);
+  };
+
+  const handleCompleteOnboarding = () => {
+    setShowOnboarding(false);
+    window.location.reload();
+  };
+
+  const handleSkipOnboarding = () => {
+    localStorage.setItem('onboardingSkipped', 'true');
+    setShowOnboarding(false);
+    setShowProfileAlert(false);
   };
 
   if (loading) {
@@ -42,6 +62,18 @@ export default function Dashboard() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-2 text-gray-600">Loading dashboard...</p>
         </div>
+      </div>
+    );
+  }
+
+  // Show onboarding flow if requested
+  if (showOnboarding) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <OnboardingFlow 
+          onComplete={handleCompleteOnboarding}
+          onSkip={handleSkipOnboarding}
+        />
       </div>
     );
   }
@@ -58,7 +90,14 @@ export default function Dashboard() {
       </div>
 
       {showProfileAlert && (
-        <ProfileCompletionAlert onDismiss={handleDismissAlert} />
+        <div className="mb-6">
+          <ProfileCompletionAlert onDismiss={handleDismissAlert} />
+          <div className="mt-3">
+            <Button onClick={handleStartOnboarding} className="mr-2">
+              Complete Profile Now
+            </Button>
+          </div>
+        </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">

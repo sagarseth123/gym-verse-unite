@@ -24,32 +24,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadUserProfile = async (userId: string) => {
+    console.log('Loading profile for user:', userId);
     try {
       // Load basic profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (profileError && profileError.code !== 'PGRST116') {
         console.error('Error loading profile:', profileError);
       } else if (profileData) {
+        console.log('Profile loaded:', profileData);
         setProfile(profileData);
-      }
 
-      // Load gym user profile if user is a gym_user
-      if (profileData?.user_role === 'gym_user') {
-        const { data: gymData, error: gymError } = await supabase
-          .from('gym_user_profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
+        // Load gym user profile if user is a gym_user
+        if (profileData.user_role === 'gym_user') {
+          const { data: gymData, error: gymError } = await supabase
+            .from('gym_user_profiles')
+            .select('*')
+            .eq('id', userId)
+            .maybeSingle();
 
-        if (gymError && gymError.code !== 'PGRST116') {
-          console.error('Error loading gym profile:', gymError);
-        } else if (gymData) {
-          setGymProfile(gymData);
+          if (gymError && gymError.code !== 'PGRST116') {
+            console.error('Error loading gym profile:', gymError);
+          } else if (gymData) {
+            console.log('Gym profile loaded:', gymData);
+            setGymProfile(gymData);
+          }
         }
       }
     } catch (error) {
@@ -67,8 +70,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    console.log('AuthProvider useEffect - initializing');
+    
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session:', session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -87,7 +93,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        await loadUserProfile(session.user.id);
+        // Use setTimeout to avoid potential deadlocks
+        setTimeout(() => {
+          loadUserProfile(session.user.id);
+        }, 0);
       } else {
         setProfile(null);
         setGymProfile(null);
