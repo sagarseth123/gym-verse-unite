@@ -16,7 +16,8 @@ import {
   Target, 
   TrendingUp,
   AlertCircle,
-  Loader2
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 
 interface FitnessPlan {
@@ -85,13 +86,19 @@ export function AIFitnessPlanner() {
 
     setIsLoading(true);
     setError(null);
+    setFitnessPlans(null);
 
     try {
       console.log('Calling generate-fitness-plan function...');
       
+      const session = await supabase.auth.getSession();
+      if (!session.data.session?.access_token) {
+        throw new Error('No valid session found');
+      }
+
       const { data, error } = await supabase.functions.invoke('generate-fitness-plan', {
         headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          Authorization: `Bearer ${session.data.session.access_token}`,
         },
       });
 
@@ -102,7 +109,7 @@ export function AIFitnessPlanner() {
         throw new Error(error.message || 'Failed to generate fitness plan');
       }
 
-      if (data && data.success) {
+      if (data?.success) {
         setFitnessPlans(data.data);
         toast({
           title: "Success!",
@@ -113,10 +120,11 @@ export function AIFitnessPlanner() {
       }
     } catch (err: any) {
       console.error('Error generating fitness plan:', err);
-      setError(err.message || 'Failed to generate fitness plan. Please try again.');
+      const errorMessage = err.message || 'Failed to generate fitness plan. Please try again.';
+      setError(errorMessage);
       toast({
         title: "Error",
-        description: err.message || "Failed to generate fitness plan. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -220,19 +228,27 @@ export function AIFitnessPlanner() {
                 </CardDescription>
               </div>
             </div>
-            <Button onClick={generatePlan} disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Target className="h-4 w-4 mr-2" />
-                  Generate Plan
-                </>
+            <div className="flex space-x-2">
+              {error && (
+                <Button onClick={generatePlan} disabled={isLoading} variant="outline">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
               )}
-            </Button>
+              <Button onClick={generatePlan} disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Target className="h-4 w-4 mr-2" />
+                    Generate Plan
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -269,7 +285,9 @@ export function AIFitnessPlanner() {
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>
+            {error}
+          </AlertDescription>
         </Alert>
       )}
 

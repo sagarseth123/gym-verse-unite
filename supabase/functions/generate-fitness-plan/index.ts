@@ -155,10 +155,10 @@ You are a certified fitness and nutrition expert. Generate a comprehensive, pers
 Make sure the plan is realistic, safe, and tailored to the user's specific goals and fitness level. Focus on sustainable habits and gradual progression.
 `;
 
-    console.log('Calling Gemini API');
+    console.log('Calling Gemini API with model: gemini-1.5-flash');
     
-    // Call Gemini API
-    const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
+    // Call Gemini API with the correct model name
+    const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
