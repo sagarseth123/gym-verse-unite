@@ -35,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (profileError) {
         console.error('Error loading profile:', profileError);
+        setLoading(false);
         return;
       }
 
@@ -52,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (createError) {
           console.error('Error creating profile:', createError);
+          setLoading(false);
           return;
         }
         
@@ -65,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Load gym user profile if user is a gym_user
-      const currentProfile = profileData || profile;
+      const currentProfile = profileData;
       if (currentProfile?.user_role === 'gym_user') {
         const { data: gymData, error: gymError } = await supabase
           .from('gym_user_profiles')
@@ -75,10 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (gymError) {
           console.error('Error loading gym profile:', gymError);
-          return;
-        }
-
-        if (!gymData) {
+        } else if (!gymData) {
           console.log('Gym profile not found, creating new gym profile');
           const { data: newGymProfile, error: createGymError } = await supabase
             .from('gym_user_profiles')
@@ -100,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error in loadUserProfile:', error);
     } finally {
+      console.log('Setting loading to false');
       setLoading(false);
     }
   };
@@ -122,8 +122,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         loadUserProfile(session.user.id);
       } else {
+        console.log('No session, setting loading to false');
         setLoading(false);
       }
+    }).catch((error) => {
+      console.error('Error getting initial session:', error);
+      setLoading(false);
     });
 
     // Listen for auth changes
@@ -139,6 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setProfile(null);
         setGymProfile(null);
+        console.log('No user, setting loading to false');
         setLoading(false);
       }
     });
