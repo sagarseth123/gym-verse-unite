@@ -39,9 +39,21 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppContent() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   
-  console.log('AppContent - user:', user?.id);
+  console.log('AppContent - user:', user?.id, 'loading:', loading);
+  
+  // Show loading while auth is being determined
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
   
   if (!user) {
     return <AuthForm />;

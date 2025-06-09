@@ -20,8 +20,17 @@ export function useProfileStatus() {
         return;
       }
 
-      if (!user || !profile) {
-        console.log('No user or profile, setting complete to false');
+      // Set loading to false if no user
+      if (!user) {
+        console.log('No user, setting profile status loading to false');
+        setIsProfileComplete(false);
+        setLoading(false);
+        return;
+      }
+
+      // If profile is null but user exists, consider incomplete
+      if (!profile) {
+        console.log('User exists but no profile, setting incomplete');
         setIsProfileComplete(false);
         setLoading(false);
         return;
@@ -62,20 +71,22 @@ export function useProfileStatus() {
 
           if (error && error.code !== 'PGRST116') {
             console.error('Error fetching gym profile:', error);
+            setGymProfile(null);
+            setIsProfileComplete(hasBasicInfo);
+          } else {
+            setGymProfile(gymData);
+
+            // Check if fitness info is complete
+            const hasFitnessInfo = !!(
+              gymData?.weight &&
+              gymData?.height &&
+              gymData?.fitness_level &&
+              gymData?.fitness_goals &&
+              gymData.fitness_goals.length > 0
+            );
+
+            setIsProfileComplete(hasBasicInfo && hasFitnessInfo);
           }
-
-          setGymProfile(gymData);
-
-          // Check if fitness info is complete
-          const hasFitnessInfo = !!(
-            gymData?.weight &&
-            gymData?.height &&
-            gymData?.fitness_level &&
-            gymData?.fitness_goals &&
-            gymData.fitness_goals.length > 0
-          );
-
-          setIsProfileComplete(hasBasicInfo && hasFitnessInfo);
         } else {
           // For non-gym users, just check basic info
           setIsProfileComplete(hasBasicInfo);

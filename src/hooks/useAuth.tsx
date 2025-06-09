@@ -23,7 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loadUserProfile = async (userId: string) => {
+  const loadUserProfile = async (userId: string, userEmail?: string) => {
     console.log('Loading profile for user:', userId);
     try {
       // Load basic profile
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('id', userId)
         .maybeSingle();
 
-      if (profileError) {
+      if (profileError && profileError.code !== 'PGRST116') {
         console.error('Error loading profile:', profileError);
         setLoading(false);
         return;
@@ -41,11 +41,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!profileData) {
         console.log('Profile not found, creating new profile');
+        const email = userEmail || user?.email || '';
+        
         const { data: newProfile, error: createError } = await supabase
           .from('profiles')
           .insert({
             id: userId,
-            email: session?.user?.email || '',
+            email: email,
             user_role: 'gym_user'
           })
           .select()
@@ -53,6 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (createError) {
           console.error('Error creating profile:', createError);
+          // Don't block the app if profile creation fails
+          setProfile(null);
           setLoading(false);
           return;
         }
@@ -75,8 +79,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .eq('id', userId)
           .maybeSingle();
 
-        if (gymError) {
+        if (gymError && gymError.code !== 'PGRST116') {
           console.error('Error loading gym profile:', gymError);
+          setGymProfile(null);
         } else if (!gymData) {
           console.log('Gym profile not found, creating new gym profile');
           const { data: newGymProfile, error: createGymError } = await supabase
@@ -87,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           if (createGymError) {
             console.error('Error creating gym profile:', createGymError);
+            setGymProfile(null);
           } else if (newGymProfile) {
             console.log('Gym profile created:', newGymProfile);
             setGymProfile(newGymProfile);
@@ -107,20 +113,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = async () => {
     if (user) {
       setLoading(true);
-      await loadUserProfile(user.id);
+      await loadUserProfile(user.id, user.email);
     }
   };
 
   useEffect(() => {
     console.log('AuthProvider useEffect - initializing');
     
-    // Get initial session
+    // Set up auth state listener FIRST to avoid missing events
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session?.user?.id);
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      // Use setTimeout to defer profile loading and prevent deadlocks
+      if (session?.user) {
+        setTimeout(() => {
+          loadUserProfile(session.user.id, session.user.email);
+        }, 0);
+      } else {
+        setProfile(null);
+        setGymProfile(null);
+        console.log('No user, setting loading to false');
+        setLoading(false);
+      }
+    });
+
+    // Get initial session AFTER setting up the listener
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log('Initial session:', session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
+      
       if (session?.user) {
-        loadUserProfile(session.user.id);
+        loadUserProfile(session.user.id, session.user.email);
       } else {
         console.log('No session, setting loading to false');
         setLoading(false);
@@ -128,24 +156,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }).catch((error) => {
       console.error('Error getting initial session:', error);
       setLoading(false);
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.id);
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        await loadUserProfile(session.user.id);
-      } else {
-        setProfile(null);
-        setGymProfile(null);
-        console.log('No user, setting loading to false');
-        setLoading(false);
-      }
     });
 
     return () => subscription.unsubscribe();
