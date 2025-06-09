@@ -18,6 +18,12 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Function started');
+
+    if (!geminiApiKey) {
+      throw new Error('GEMINI_API_KEY not configured');
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
     // Get the user from the Authorization header
@@ -26,33 +32,49 @@ serve(async (req) => {
       throw new Error('No authorization header');
     }
 
+    console.log('Getting user from auth header');
     const { data: { user }, error: authError } = await supabase.auth.getUser(
       authHeader.replace('Bearer ', '')
     );
 
     if (authError || !user) {
+      console.error('Auth error:', authError);
       throw new Error('Unauthorized');
     }
 
+    console.log('User authenticated:', user.id);
+
     // Get user profile data
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
-    const { data: gymProfile } = await supabase
+    if (profileError) {
+      console.error('Profile error:', profileError);
+      throw new Error('Failed to fetch profile');
+    }
+
+    const { data: gymProfile, error: gymProfileError } = await supabase
       .from('gym_user_profiles')
       .select('*')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (!profile || !gymProfile) {
-      throw new Error('Profile data not found');
+    if (gymProfileError) {
+      console.error('Gym profile error:', gymProfileError);
+      throw new Error('Failed to fetch gym profile');
     }
 
-    // Calculate age (if we had birth_date, but we'll use a default for now)
-    const estimatedAge = 25; // Default age, you can add birth_date to profile later
+    if (!profile || !gymProfile) {
+      throw new Error('Profile data not found. Please complete your profile first.');
+    }
+
+    console.log('Profile data retrieved successfully');
+
+    // Calculate age (using a default for now since we don't have birth_date)
+    const estimatedAge = 25;
 
     // Calculate BMI if not already calculated
     const bmi = gymProfile.bmi || (gymProfile.weight && gymProfile.height ? 
@@ -133,6 +155,8 @@ You are a certified fitness and nutrition expert. Generate a comprehensive, pers
 Make sure the plan is realistic, safe, and tailored to the user's specific goals and fitness level. Focus on sustainable habits and gradual progression.
 `;
 
+    console.log('Calling Gemini API');
+    
     // Call Gemini API
     const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
@@ -156,18 +180,20 @@ Make sure the plan is realistic, safe, and tailored to the user's specific goals
 
     if (!geminiResponse.ok) {
       const errorText = await geminiResponse.text();
-      console.error('Gemini API error:', errorText);
-      throw new Error(`Gemini API error: ${geminiResponse.status}`);
+      console.error('Gemini API error:', geminiResponse.status, errorText);
+      throw new Error(`Gemini API error: ${geminiResponse.status} - ${errorText}`);
     }
 
     const geminiData = await geminiResponse.json();
-    console.log('Gemini response:', geminiData);
+    console.log('Gemini response received');
 
     if (!geminiData.candidates || !geminiData.candidates[0]) {
+      console.error('No candidates in Gemini response:', geminiData);
       throw new Error('No response from Gemini API');
     }
 
     const responseText = geminiData.candidates[0].content.parts[0].text;
+    console.log('Response text length:', responseText.length);
     
     // Try to extract JSON from the response
     let fitnessPlans;
@@ -175,9 +201,11 @@ Make sure the plan is realistic, safe, and tailored to the user's specific goals
       // Find JSON in the response (it might be wrapped in markdown code blocks)
       const jsonMatch = responseText.match(/```json\n([\s\S]*?)\n```/) || responseText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        fitnessPlans = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+        const jsonString = jsonMatch[1] || jsonMatch[0];
+        fitnessPlans = JSON.parse(jsonString);
+        console.log('Successfully parsed JSON response');
       } else {
-        // If no JSON found, return the raw text
+        console.log('No JSON found in response, returning raw text');
         fitnessPlans = { rawResponse: responseText };
       }
     } catch (parseError) {

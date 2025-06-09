@@ -31,64 +31,70 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         console.error('Error loading profile:', profileError);
-        // If profile doesn't exist, create one
-        if (profileError.code === 'PGRST116') {
-          console.log('Profile not found, creating new profile');
-          const { data: newProfile, error: createError } = await supabase
-            .from('profiles')
-            .insert({
-              id: userId,
-              email: session?.user?.email || '',
-              user_role: 'gym_user'
-            })
-            .select()
-            .single();
+        return;
+      }
 
-          if (createError) {
-            console.error('Error creating profile:', createError);
-          } else {
-            console.log('Profile created:', newProfile);
-            setProfile(newProfile);
-          }
+      if (!profileData) {
+        console.log('Profile not found, creating new profile');
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            email: session?.user?.email || '',
+            user_role: 'gym_user'
+          })
+          .select()
+          .maybeSingle();
+
+        if (createError) {
+          console.error('Error creating profile:', createError);
+          return;
         }
-      } else if (profileData) {
+        
+        if (newProfile) {
+          console.log('Profile created:', newProfile);
+          setProfile(newProfile);
+        }
+      } else {
         console.log('Profile loaded:', profileData);
         setProfile(profileData);
+      }
 
-        // Load gym user profile if user is a gym_user
-        if (profileData.user_role === 'gym_user') {
-          const { data: gymData, error: gymError } = await supabase
+      // Load gym user profile if user is a gym_user
+      const currentProfile = profileData || profile;
+      if (currentProfile?.user_role === 'gym_user') {
+        const { data: gymData, error: gymError } = await supabase
+          .from('gym_user_profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (gymError) {
+          console.error('Error loading gym profile:', gymError);
+          return;
+        }
+
+        if (!gymData) {
+          console.log('Gym profile not found, creating new gym profile');
+          const { data: newGymProfile, error: createGymError } = await supabase
             .from('gym_user_profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
+            .insert({ id: userId })
+            .select()
+            .maybeSingle();
 
-          if (gymError) {
-            if (gymError.code === 'PGRST116') {
-              console.log('Gym profile not found, creating new gym profile');
-              const { data: newGymProfile, error: createGymError } = await supabase
-                .from('gym_user_profiles')
-                .insert({ id: userId })
-                .select()
-                .single();
-
-              if (createGymError) {
-                console.error('Error creating gym profile:', createGymError);
-              } else {
-                console.log('Gym profile created:', newGymProfile);
-                setGymProfile(newGymProfile);
-              }
-            } else {
-              console.error('Error loading gym profile:', gymError);
-            }
-          } else if (gymData) {
-            console.log('Gym profile loaded:', gymData);
-            setGymProfile(gymData);
+          if (createGymError) {
+            console.error('Error creating gym profile:', createGymError);
+          } else if (newGymProfile) {
+            console.log('Gym profile created:', newGymProfile);
+            setGymProfile(newGymProfile);
           }
+        } else {
+          console.log('Gym profile loaded:', gymData);
+          setGymProfile(gymData);
         }
       }
     } catch (error) {
