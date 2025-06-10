@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_exercises_cache: {
+        Row: {
+          created_at: string
+          exercise_data: Json
+          exercise_name: string
+          generated_at: string
+          goal_category: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          exercise_data: Json
+          exercise_name: string
+          generated_at?: string
+          goal_category: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          exercise_data?: Json
+          exercise_name?: string
+          generated_at?: string
+          goal_category?: string
+          id?: string
+        }
+        Relationships: []
+      }
       exercises: {
         Row: {
           category: string
@@ -489,6 +516,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_exercise_history: {
+        Row: {
+          created_at: string
+          exercise_id: string | null
+          exercise_name: string
+          goal_category: string
+          id: string
+          notes: string | null
+          performed: boolean | null
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          created_at?: string
+          exercise_id?: string | null
+          exercise_name: string
+          goal_category: string
+          id?: string
+          notes?: string | null
+          performed?: boolean | null
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          created_at?: string
+          exercise_id?: string | null
+          exercise_name?: string
+          goal_category?: string
+          id?: string
+          notes?: string | null
+          performed?: boolean | null
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: []
+      }
+      user_exercise_preferences: {
+        Row: {
+          created_at: string
+          difficulty_preference: string | null
+          equipment_available: string[] | null
+          favorite_exercises: string[] | null
+          id: string
+          preferred_goal_categories: string[] | null
+          session_duration_minutes: number | null
+          updated_at: string
+          user_id: string
+          workout_frequency_per_week: number | null
+        }
+        Insert: {
+          created_at?: string
+          difficulty_preference?: string | null
+          equipment_available?: string[] | null
+          favorite_exercises?: string[] | null
+          id?: string
+          preferred_goal_categories?: string[] | null
+          session_duration_minutes?: number | null
+          updated_at?: string
+          user_id: string
+          workout_frequency_per_week?: number | null
+        }
+        Update: {
+          created_at?: string
+          difficulty_preference?: string | null
+          equipment_available?: string[] | null
+          favorite_exercises?: string[] | null
+          id?: string
+          preferred_goal_categories?: string[] | null
+          session_duration_minutes?: number | null
+          updated_at?: string
+          user_id?: string
+          workout_frequency_per_week?: number | null
+        }
+        Relationships: []
       }
       user_nutrition_log: {
         Row: {

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,25 +6,44 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EnhancedExercise } from '@/types/fitness';
-import { Search, Dumbbell, Apple, Store, Filter, Sparkles } from 'lucide-react';
+import { Search, Dumbbell, Apple, Store, Filter, Sparkles, Zap, History, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { FITNESS_GOAL_CATEGORIES, FitnessGoalCategory } from '@/types/fitness';
 import { GoalCategoryCard } from '@/components/fitness/GoalCategoryCard';
 import { EnhancedExerciseCard } from '@/components/fitness/EnhancedExerciseCard';
+import { AIExerciseCard } from '@/components/fitness/AIExerciseCard';
+import { AIExerciseDetailModal } from '@/components/fitness/AIExerciseDetailModal';
+import { AIExerciseService, AIGeneratedExercise } from '@/services/aiExerciseService';
+import { useExerciseHistory } from '@/hooks/useExerciseHistory';
+import { useExercisePreferences } from '@/hooks/useExercisePreferences';
 
 export default function Explore() {
   const [exercises, setExercises] = useState<EnhancedExercise[]>([]);
+  const [aiExercises, setAiExercises] = useState<AIGeneratedExercise[]>([]);
   const [nutrition, setNutrition] = useState<any[]>([]);
   const [gyms, setGyms] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGoalCategory, setSelectedGoalCategory] = useState<string | null>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [selectedAIExercise, setSelectedAIExercise] = useState<AIGeneratedExercise | null>(null);
+  const [showPersonalized, setShowPersonalized] = useState(false);
+  const [personalizedExercises, setPersonalizedExercises] = useState<AIGeneratedExercise[]>([]);
   const { toast } = useToast();
+  const { history } = useExerciseHistory();
+  const { preferences } = useExercisePreferences();
 
   useEffect(() => {
     loadData();
+    loadPersonalizedRecommendations();
   }, []);
+
+  useEffect(() => {
+    if (selectedGoalCategory) {
+      loadAIExercisesForCategory(selectedGoalCategory);
+    }
+  }, [selectedGoalCategory]);
 
   const loadData = async () => {
     try {
@@ -59,6 +77,73 @@ export default function Explore() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAIExercisesForCategory = async (categoryId: string) => {
+    setAiLoading(true);
+    try {
+      // First try to get cached exercises
+      const cachedExercises = await AIExerciseService.getCachedExercises(categoryId);
+      
+      if (cachedExercises.length > 0) {
+        setAiExercises(cachedExercises);
+      } else {
+        // Generate new exercises if none cached
+        const generatedExercises = await AIExerciseService.generateExercisesForGoalCategory(categoryId);
+        setAiExercises(generatedExercises);
+        toast({
+          title: "AI Exercises Generated!",
+          description: `Generated ${generatedExercises.length} personalized exercises for ${categoryId}`,
+        });
+      }
+    } catch (error: any) {
+      console.error('Error loading AI exercises:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load AI exercises. Please try again.",
+        variant: "destructive",
+      });
+      setAiExercises([]);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const loadPersonalizedRecommendations = async () => {
+    try {
+      const recommendations = await AIExerciseService.getPersonalizedRecommendations(
+        preferences,
+        history
+      );
+      setPersonalizedExercises(recommendations.suggestedExercises);
+    } catch (error) {
+      console.error('Error loading personalized recommendations:', error);
+    }
+  };
+
+  const handleRefreshAIExercises = async () => {
+    if (selectedGoalCategory) {
+      setAiLoading(true);
+      try {
+        const generatedExercises = await AIExerciseService.generateExercisesForGoalCategory(
+          selectedGoalCategory, 
+          true // Force refresh
+        );
+        setAiExercises(generatedExercises);
+        toast({
+          title: "Fresh AI Exercises!",
+          description: `Generated ${generatedExercises.length} new exercises`,
+        });
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: "Failed to generate new exercises",
+          variant: "destructive",
+        });
+      } finally {
+        setAiLoading(false);
+      }
     }
   };
 
@@ -159,6 +244,23 @@ export default function Explore() {
     gym.city.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const getFilteredAIExercises = () => {
+    let filtered = aiExercises;
+    
+    if (selectedDifficulty) {
+      filtered = filtered.filter(exercise => exercise.difficulty === selectedDifficulty);
+    }
+    
+    if (searchTerm) {
+      filtered = filtered.filter(exercise =>
+        exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        exercise.muscle_groups?.some(mg => mg.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+    
+    return filtered;
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -170,8 +272,8 @@ export default function Explore() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Explore Fitness</h1>
-        <p className="text-gray-600 mb-4">Discover exercises, nutrition, and gyms with AI-powered guidance</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">AI-Powered Fitness Explorer</h1>
+        <p className="text-gray-600 mb-4">Discover personalized exercises, nutrition, and gyms with AI guidance</p>
         <div className="relative">
           <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           <Input
@@ -200,21 +302,67 @@ export default function Explore() {
         </TabsList>
         
         <TabsContent value="exercises" className="mt-6">
+          {/* Personalized Recommendations */}
+          {personalizedExercises.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <Heart className="h-5 w-5 text-red-600" />
+                  Personalized for You
+                </h2>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowPersonalized(!showPersonalized)}
+                  size="sm"
+                >
+                  {showPersonalized ? 'Hide' : 'Show'} Recommendations
+                </Button>
+              </div>
+              
+              {showPersonalized && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                  {personalizedExercises.slice(0, 8).map((exercise) => (
+                    <AIExerciseCard
+                      key={exercise.id}
+                      exercise={exercise}
+                      onViewDetails={setSelectedAIExercise}
+                      compact={true}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Goal Categories */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-blue-600" />
-                Fitness Goal Categories
+                AI Exercise Categories
               </h2>
               {selectedGoalCategory && (
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectedGoalCategory(null)}
-                  size="sm"
-                >
-                  Clear Filter
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleRefreshAIExercises}
+                    size="sm"
+                    disabled={aiLoading}
+                  >
+                    <Zap className="h-4 w-4 mr-1" />
+                    Generate New
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedGoalCategory(null);
+                      setAiExercises([]);
+                    }}
+                    size="sm"
+                  >
+                    Clear Filter
+                  </Button>
+                </div>
               )}
             </div>
             
@@ -247,24 +395,58 @@ export default function Explore() {
             ))}
           </div>
 
-          {/* Exercise Results */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {getFilteredExercises().map((exercise) => (
-              <EnhancedExerciseCard
-                key={exercise.id}
-                exercise={exercise}
-                showGoalContext={!selectedGoalCategory}
-              />
-            ))}
-          </div>
-
-          {getFilteredExercises().length === 0 && (
-            <div className="text-center py-12">
-              <Dumbbell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No exercises found</h3>
-              <p className="text-gray-500">Try adjusting your search or filter criteria</p>
+          {/* AI Generated Exercises for Selected Category */}
+          {selectedGoalCategory && (
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Zap className="h-5 w-5 text-purple-600" />
+                AI-Generated Exercises
+                {aiLoading && <span className="text-sm text-gray-500">(Generating...)</span>}
+              </h3>
+              
+              {aiLoading ? (
+                <div className="text-center py-8">
+                  <Zap className="h-8 w-8 animate-pulse text-purple-600 mx-auto mb-2" />
+                  <p>AI is generating personalized exercises...</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {getFilteredAIExercises().map((exercise) => (
+                    <AIExerciseCard
+                      key={exercise.id}
+                      exercise={exercise}
+                      onViewDetails={setSelectedAIExercise}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
+
+          {/* Database Exercises */}
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <History className="h-5 w-5 text-gray-600" />
+              Exercise Database
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {getFilteredExercises().map((exercise) => (
+                <EnhancedExerciseCard
+                  key={exercise.id}
+                  exercise={exercise}
+                  showGoalContext={!selectedGoalCategory}
+                />
+              ))}
+            </div>
+
+            {getFilteredExercises().length === 0 && (
+              <div className="text-center py-12">
+                <Dumbbell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No exercises found</h3>
+                <p className="text-gray-500">Try adjusting your search or filter criteria</p>
+              </div>
+            )}
+          </div>
         </TabsContent>
         
         <TabsContent value="nutrition" className="mt-6">
@@ -331,6 +513,12 @@ export default function Explore() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <AIExerciseDetailModal
+        exercise={selectedAIExercise}
+        isOpen={!!selectedAIExercise}
+        onClose={() => setSelectedAIExercise(null)}
+      />
     </div>
   );
 }
