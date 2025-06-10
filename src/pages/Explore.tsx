@@ -1,19 +1,23 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Exercise, Product } from '@/types/database';
-import { Search, Dumbbell, Apple, Store } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { EnhancedExercise } from '@/types/fitness';
+import { Search, Dumbbell, Apple, Store, Filter, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { FITNESS_Goal_CATEGORIES, FitnessGoalCategory } from '@/types/fitness';
+import { GoalCategoryCard } from '@/components/fitness/GoalCategoryCard';
+import { EnhancedExerciseCard } from '@/components/fitness/EnhancedExerciseCard';
 
 export default function Explore() {
-  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [exercises, setExercises] = useState<EnhancedExercise[]>([]);
   const [nutrition, setNutrition] = useState<any[]>([]);
   const [gyms, setGyms] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedGoalCategory, setSelectedGoalCategory] = useState<string | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -24,7 +28,7 @@ export default function Explore() {
   const loadData = async () => {
     try {
       const [exercisesResult, nutritionResult, gymsResult] = await Promise.all([
-        supabase.from('exercises').select('*').limit(20),
+        supabase.from('exercises').select('*').limit(50),
         supabase.from('nutrition').select('*').limit(20),
         supabase.from('gyms').select('*').limit(20)
       ]);
@@ -33,7 +37,16 @@ export default function Explore() {
       if (nutritionResult.error) throw nutritionResult.error;
       if (gymsResult.error) throw gymsResult.error;
 
-      setExercises(exercisesResult.data || []);
+      // Enhance exercises with goal categories and difficulty
+      const enhancedExercises = (exercisesResult.data || []).map(exercise => ({
+        ...exercise,
+        goalCategories: mapExerciseToGoals(exercise),
+        difficulty: determineDifficulty(exercise),
+        primaryMuscles: exercise.muscle_groups?.slice(0, 2) || [],
+        secondaryMuscles: exercise.muscle_groups?.slice(2) || []
+      }));
+
+      setExercises(enhancedExercises);
       setNutrition(nutritionResult.data || []);
       setGyms(gymsResult.data || []);
     } catch (error: any) {
@@ -47,10 +60,92 @@ export default function Explore() {
     }
   };
 
-  const filteredExercises = exercises.filter(exercise =>
-    exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    exercise.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const mapExerciseToGoals = (exercise: any): string[] => {
+    const categories = [];
+    
+    // Map based on category and muscle groups
+    if (exercise.category?.toLowerCase().includes('strength') || 
+        exercise.muscle_groups?.some((m: string) => ['chest', 'back', 'shoulders', 'arms', 'biceps', 'triceps'].includes(m.toLowerCase()))) {
+      categories.push('strength-building');
+    }
+    
+    if (exercise.category?.toLowerCase().includes('cardio') || 
+        exercise.name?.toLowerCase().includes('cardio') ||
+        exercise.name?.toLowerCase().includes('running')) {
+      categories.push('weight-loss');
+    }
+    
+    if (exercise.equipment_needed?.includes('bodyweight') || 
+        exercise.equipment_needed?.length === 0 ||
+        exercise.name?.toLowerCase().includes('push') ||
+        exercise.name?.toLowerCase().includes('pull')) {
+      categories.push('calisthenics');
+    }
+    
+    if (exercise.difficulty_level === 'advanced' || 
+        exercise.muscle_groups?.includes('legs') ||
+        exercise.name?.toLowerCase().includes('squat') ||
+        exercise.name?.toLowerCase().includes('deadlift')) {
+      categories.push('bulking');
+    }
+    
+    if (exercise.category?.toLowerCase().includes('functional') ||
+        exercise.name?.toLowerCase().includes('kettle') ||
+        exercise.name?.toLowerCase().includes('burpee')) {
+      categories.push('functional');
+    }
+    
+    if (exercise.category?.toLowerCase().includes('yoga') ||
+        exercise.category?.toLowerCase().includes('stretch') ||
+        exercise.name?.toLowerCase().includes('stretch')) {
+      categories.push('flexibility');
+    }
+    
+    return categories.length > 0 ? categories : ['strength-building']; // Default fallback
+  };
+
+  const determineDifficulty = (exercise: any): 'beginner' | 'intermediate' | 'advanced' => {
+    if (exercise.difficulty_level) {
+      return exercise.difficulty_level as 'beginner' | 'intermediate' | 'advanced';
+    }
+    
+    // Determine based on exercise characteristics
+    if (exercise.equipment_needed?.includes('bodyweight') || exercise.equipment_needed?.length === 0) {
+      return 'beginner';
+    }
+    if (exercise.equipment_needed?.includes('barbell') || exercise.name?.toLowerCase().includes('deadlift')) {
+      return 'advanced';
+    }
+    return 'intermediate';
+  };
+
+  const getExercisesByGoalCategory = (categoryId: string) => {
+    return exercises.filter(exercise => 
+      exercise.goalCategories.includes(categoryId)
+    );
+  };
+
+  const getFilteredExercises = () => {
+    let filtered = exercises;
+    
+    if (selectedGoalCategory) {
+      filtered = getExercisesByGoalCategory(selectedGoalCategory);
+    }
+    
+    if (selectedDifficulty) {
+      filtered = filtered.filter(exercise => exercise.difficulty === selectedDifficulty);
+    }
+    
+    if (searchTerm) {
+      filtered = filtered.filter(exercise =>
+        exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        exercise.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        exercise.muscle_groups?.some(mg => mg.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+    
+    return filtered;
+  };
 
   const filteredNutrition = nutrition.filter(food =>
     food.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -73,7 +168,8 @@ export default function Explore() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Explore Fitness</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Explore Fitness</h1>
+        <p className="text-gray-600 mb-4">Discover exercises, nutrition, and gyms with AI-powered guidance</p>
         <div className="relative">
           <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           <Input
@@ -89,7 +185,7 @@ export default function Explore() {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="exercises" className="flex items-center gap-2">
             <Dumbbell className="h-4 w-4" />
-            Exercises
+            AI-Powered Exercises
           </TabsTrigger>
           <TabsTrigger value="nutrition" className="flex items-center gap-2">
             <Apple className="h-4 w-4" />
@@ -102,40 +198,71 @@ export default function Explore() {
         </TabsList>
         
         <TabsContent value="exercises" className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredExercises.map((exercise) => (
-              <Card key={exercise.id} className="cursor-pointer hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="text-lg">{exercise.name}</CardTitle>
-                  <CardDescription className="flex items-center gap-2">
-                    <Badge variant="secondary">{exercise.category}</Badge>
-                    {exercise.difficulty_level && (
-                      <Badge variant="outline">{exercise.difficulty_level}</Badge>
-                    )}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {exercise.muscle_groups && (
-                    <div className="mb-3">
-                      <p className="text-sm font-medium mb-2">Target Muscles:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {exercise.muscle_groups.map((muscle, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {muscle}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {exercise.instructions && (
-                    <p className="text-sm text-gray-600 line-clamp-3">
-                      {exercise.instructions}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
+          {/* Goal Categories */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-blue-600" />
+                Fitness Goal Categories
+              </h2>
+              {selectedGoalCategory && (
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedGoalCategory(null)}
+                  size="sm"
+                >
+                  Clear Filter
+                </Button>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              {FITNESS_Goal_CATEGORIES.map((category) => (
+                <GoalCategoryCard
+                  key={category.id}
+                  category={category}
+                  exerciseCount={getExercisesByGoalCategory(category.id).length}
+                  onClick={() => setSelectedGoalCategory(category.id)}
+                  isSelected={selectedGoalCategory === category.id}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            <Filter className="h-4 w-4 text-gray-500 mt-2" />
+            <span className="text-sm text-gray-500 mt-1 mr-2">Difficulty:</span>
+            {['beginner', 'intermediate', 'advanced'].map((difficulty) => (
+              <Button
+                key={difficulty}
+                variant={selectedDifficulty === difficulty ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedDifficulty(selectedDifficulty === difficulty ? null : difficulty)}
+              >
+                {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+              </Button>
             ))}
           </div>
+
+          {/* Exercise Results */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {getFilteredExercises().map((exercise) => (
+              <EnhancedExerciseCard
+                key={exercise.id}
+                exercise={exercise}
+                showGoalContext={!selectedGoalCategory}
+              />
+            ))}
+          </div>
+
+          {getFilteredExercises().length === 0 && (
+            <div className="text-center py-12">
+              <Dumbbell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No exercises found</h3>
+              <p className="text-gray-500">Try adjusting your search or filter criteria</p>
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="nutrition" className="mt-6">
