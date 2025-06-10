@@ -1,13 +1,15 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EnhancedExercise } from '@/types/fitness';
 import { Search, Dumbbell, Apple, Store, Filter, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { FITNESS_Goal_CATEGORIES, FitnessGoalCategory } from '@/types/fitness';
+import { FITNESS_GOAL_CATEGORIES, FitnessGoalCategory } from '@/types/fitness';
 import { GoalCategoryCard } from '@/components/fitness/GoalCategoryCard';
 import { EnhancedExerciseCard } from '@/components/fitness/EnhancedExerciseCard';
 
@@ -217,7 +219,7 @@ export default function Explore() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-              {FITNESS_Goal_CATEGORIES.map((category) => (
+              {FITNESS_GOAL_CATEGORIES.map((category) => (
                 <GoalCategoryCard
                   key={category.id}
                   category={category}

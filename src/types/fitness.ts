@@ -1,4 +1,14 @@
 
+export interface Exercise {
+  id: string;
+  name: string;
+  category: string;
+  muscle_groups: string[];
+  equipment_needed: string[];
+  instructions?: string;
+  difficulty_level?: string;
+}
+
 export interface FitnessGoalCategory {
   id: string;
   name: string;
