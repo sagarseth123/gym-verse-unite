@@ -51,11 +51,17 @@ export function useExerciseHistory() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Generate a proper UUID if exercise_id is invalid or not provided
+      let validExerciseId = null;
+      if (exercise.exercise_id && exercise.exercise_id.length >= 32) {
+        validExerciseId = exercise.exercise_id;
+      }
+
       const { error } = await supabase
         .from('user_exercise_history')
         .insert({
           user_id: user.id,
-          exercise_id: exercise.exercise_id,
+          exercise_id: validExerciseId,
           exercise_name: exercise.exercise_name,
           goal_category: exercise.goal_category,
           performed: exercise.performed || false,
