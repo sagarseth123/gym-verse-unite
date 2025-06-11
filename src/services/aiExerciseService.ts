@@ -58,7 +58,8 @@ export class AIExerciseService {
 
       if (error) throw error;
 
-      return (data || []).map(cache => cache.exercise_data);
+      // Properly cast Json to AIGeneratedExercise
+      return (data || []).map(cache => cache.exercise_data as AIGeneratedExercise);
     } catch (error) {
       console.error('Error getting cached exercises:', error);
       return [];
