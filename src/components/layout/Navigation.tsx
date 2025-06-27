@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,8 @@ import {
   LogOut,
   Dumbbell,
   Users,
-  BarChart3
+  BarChart3,
+  TrendingUp
 } from 'lucide-react';
 
 export function Navigation() {
@@ -33,6 +33,7 @@ export function Navigation() {
 
   const userNavItems = [
     { path: '/dashboard', label: 'Home', icon: Home },
+    { path: '/WeeklyProgress', label: 'Weekly Progress', icon: TrendingUp },
     { path: '/explore', label: 'Explore', icon: Search },
     { path: '/shop', label: 'Shop', icon: ShoppingCart },
     { path: '/profile', label: 'Profile', icon: User },

@@ -1,7 +1,7 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { config } from './config.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,14 +16,11 @@ serve(async (req) => {
   try {
     const { goalCategory, forceRefresh = false } = await req.json();
     
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
-    if (!geminiApiKey) {
-      throw new Error('GEMINI_API_KEY not configured');
+    const { supabaseUrl, supabaseServiceKey, geminiApiKey } = config;
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Supabase configuration missing in config.ts');
     }
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Check if we have cached exercises for this goal category (unless force refresh)
     if (!forceRefresh) {
@@ -146,7 +143,14 @@ Generate 25 high-quality exercises that would form a comprehensive training syst
       throw new Error(`Gemini API error: ${response.status}`);
     }
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (jsonErr) {
+      const text = await response.text();
+      console.error('Failed to parse Gemini API response as JSON:', text);
+      throw new Error('Gemini API returned invalid JSON');
+    }
     
     if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
       throw new Error('Invalid response from Gemini API');

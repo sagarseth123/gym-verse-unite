@@ -1,5 +1,6 @@
-
 import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,7 @@ import {
   Target,
   Loader2
 } from 'lucide-react';
+import { startOfWeek, format } from 'date-fns';
 
 interface CategoryExerciseModalProps {
   isOpen: boolean;
@@ -42,6 +44,10 @@ export function CategoryExerciseModal({
 }: CategoryExerciseModalProps) {
   const [selectedAIExercise, setSelectedAIExercise] = useState<AIGeneratedExercise | null>(null);
   const [selectedExercises, setSelectedExercises] = useState<string[]>([]);
+  const [planModalOpen, setPlanModalOpen] = useState(false);
+  const [planLoading, setPlanLoading] = useState(false);
+  const [planData, setPlanData] = useState<any>(null);
+  const { toast } = useToast();
 
   const handleExerciseSelect = (exerciseId: string) => {
     setSelectedExercises(prev => 
@@ -51,14 +57,129 @@ export function CategoryExerciseModal({
     );
   };
 
-  const handleCreateAIPlan = () => {
-    // TODO: Implement AI plan creation
-    console.log('Creating AI-powered weekly plan for', categoryName);
+  const handleCreateAIPlan = async () => {
+    setPlanLoading(true);
+    setPlanData(null);
+    setPlanModalOpen(true);
+    try {
+      // Prepare allowed exercises from dbExercises (with metadata)
+      const allowedExercises = dbExercises.map(ex => ({
+        name: ex.name,
+        difficulty: ex.difficulty,
+        muscle_groups: ex.muscle_groups,
+        equipment_needed: ex.equipment_needed,
+      }));
+      const { data, error } = await supabase.functions.invoke('generate-fitness-plan', {
+        body: {
+          type: 'weekly_plan',
+          category: categoryName,
+          allowedExercises,
+        },
+      });
+      if (error) throw error;
+      setPlanData(data?.data || data);
+      // Parse and normalize plan structure for dashboard compatibility
+      const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+      let normalizedPlan = { ...(data?.data || data) };
+      function parseRawPlan(raw) {
+        let rawStr = raw.trim();
+        if (rawStr.startsWith('```json')) rawStr = rawStr.slice(7);
+        if (rawStr.startsWith('```')) rawStr = rawStr.slice(3);
+        if (rawStr.endsWith('```')) rawStr = rawStr.slice(0, -3);
+        try {
+          return JSON.parse(rawStr);
+        } catch (e) {
+          return null;
+        }
+      }
+      // If plan.plan.raw exists, always parse and use it
+      if (normalizedPlan.plan && typeof normalizedPlan.plan.raw === 'string') {
+        const parsed = parseRawPlan(normalizedPlan.plan.raw);
+        if (parsed && parsed.plan) {
+          normalizedPlan.exercisePlan = parsed.plan;
+          if (parsed.tips) normalizedPlan.tips = parsed.tips;
+        }
+      }
+      // If exercisePlan.raw exists, parse it (fallback)
+      if (normalizedPlan.exercisePlan && typeof normalizedPlan.exercisePlan.raw === 'string') {
+        const parsed = parseRawPlan(normalizedPlan.exercisePlan.raw);
+        if (parsed && parsed.plan) {
+          normalizedPlan.exercisePlan = parsed.plan;
+          if (parsed.tips) normalizedPlan.tips = parsed.tips;
+        }
+      }
+      // Ensure all days are present, but do NOT overwrite real exercises
+      if (!normalizedPlan.exercisePlan) {
+        normalizedPlan.exercisePlan = {};
+      }
+      days.forEach(day => {
+        if (!normalizedPlan.exercisePlan[day]) {
+          normalizedPlan.exercisePlan[day] = { type: '', duration: '', exercises: [] };
+        } else if (!Array.isArray(normalizedPlan.exercisePlan[day].exercises)) {
+          normalizedPlan.exercisePlan[day].exercises = [];
+        }
+      });
+      // Save plan to user_weekly_plans
+      const session = await supabase.auth.getSession();
+      const user = session.data.session?.user;
+      if (user) {
+        const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+        console.log('Normalized plan to save:', normalizedPlan);
+        await supabase.from('user_weekly_plans').upsert({
+          user_id: user.id,
+          week_start: weekStart,
+          plan_data: normalizedPlan
+        }, { onConflict: 'user_id,week_start' });
+      }
+      toast({
+        title: 'AI Plan Generated!',
+        description: 'Your personalized AI plan has been generated and saved.',
+      });
+    } catch (err: any) {
+      setPlanData({ error: err.message || 'Failed to generate plan.' });
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to generate plan.',
+        variant: 'destructive',
+      });
+    } finally {
+      setPlanLoading(false);
+    }
   };
 
-  const handleCreateManualPlan = () => {
-    // TODO: Implement manual plan creation with selected exercises
-    console.log('Creating manual plan with exercises:', selectedExercises);
+  const handleCreateManualPlan = async () => {
+    // Save selected exercises as a manual plan
+    const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+    let normalizedPlan: any = { type: 'manual', exercisePlan: {} };
+    const perDay = Math.ceil(selectedExercises.length / 7);
+    days.forEach((day, idx) => {
+      normalizedPlan.exercisePlan[day] = {
+        type: '',
+        duration: '',
+        exercises: selectedExercises.slice(idx * perDay, (idx + 1) * perDay)
+      };
+    });
+    const session = await supabase.auth.getSession();
+    const user = session.data.session?.user;
+    if (user) {
+      const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+      await supabase.from('user_weekly_plans').upsert({
+        user_id: user.id,
+        week_start: weekStart,
+        plan_data: normalizedPlan
+      }, { onConflict: 'user_id,week_start' });
+      toast({
+        title: 'Plan Created!',
+        description: `Created and saved a plan with ${selectedExercises.length} exercises.`,
+      });
+      setSelectedExercises([]);
+    } else {
+      toast({
+        title: 'Error',
+        description: 'User not authenticated.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -217,6 +338,24 @@ export function CategoryExerciseModal({
               </TabsContent>
             </Tabs>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={planModalOpen} onOpenChange={setPlanModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>AI Generated Plan</DialogTitle>
+          </DialogHeader>
+          {planLoading ? (
+            <div className="flex flex-col items-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-purple-600 mb-4" />
+              <p>Generating your plan...</p>
+            </div>
+          ) : planData && !planData.error ? (
+            <pre className="whitespace-pre-wrap text-sm max-h-96 overflow-y-auto">{JSON.stringify(planData, null, 2)}</pre>
+          ) : (
+            <div className="text-red-600">{planData?.error || 'Failed to generate plan.'}</div>
+          )}
         </DialogContent>
       </Dialog>
 

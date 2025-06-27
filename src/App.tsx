@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +11,8 @@ import Profile from "./pages/Profile";
 import Explore from "./pages/Explore";
 import Shop from "./pages/Shop";
 import NotFound from "./pages/NotFound";
+import { AIChatCoach } from '@/components/ui/AIChatCoach';
+import WeeklyProgress from "./pages/WeeklyProgress";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,7 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/WeeklyProgress" element={<WeeklyProgress />} />
           <Route path="/explore" element={<Explore />} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/profile" element={<Profile />} />
@@ -95,6 +97,7 @@ const App = () => (
           </ProtectedRoute>
         </AuthProvider>
       </BrowserRouter>
+      <AIChatCoach />
     </TooltipProvider>
   </QueryClientProvider>
 );
