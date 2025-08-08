@@ -7,6 +7,7 @@ export interface Exercise {
   equipment_needed: string[];
   instructions?: string;
   difficulty_level?: string;
+  imageUrl?: string;
 }
 
 export interface FitnessGoalCategory {
@@ -35,6 +36,7 @@ export interface EnhancedExercise extends Exercise {
   primaryMuscles: string[];
   secondaryMuscles: string[];
   aiGuidance?: ExerciseGuidance;
+  imageUrl?: string;
 }
 
 export const FITNESS_GOAL_CATEGORIES: FitnessGoalCategory[] = [

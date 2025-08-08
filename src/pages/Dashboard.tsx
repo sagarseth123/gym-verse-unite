@@ -35,7 +35,7 @@ export default function Dashboard() {
   const [weeklyPlan, setWeeklyPlan] = useState<any>(null);
   const [trackLoading, setTrackLoading] = useState(true);
   const [trackError, setTrackError] = useState<string | null>(null);
-  const [workoutInputs, setWorkoutInputs] = useState<{ [date: string]: { calories: string; notes: string; completed: boolean; aiFeedback?: string; aiLoading?: boolean } }>({});
+  const [workoutInputs, setWorkoutInputs] = useState<{ [date: string]: { calories: string; notes: string; completed: boolean; weight_lifted?: string; calories_burned?: string; aiFeedback?: string; aiLoading?: boolean } }>({});
   const { toast } = useToast();
 
   // Add state for weekly progress
@@ -122,7 +122,7 @@ export default function Dashboard() {
   }, []);
 
   // Handle workout tracking input changes
-  const handleInputChange = (date: string, field: 'calories' | 'notes', value: string) => {
+  const handleInputChange = (date: string, field: 'calories' | 'notes' | 'weight_lifted' | 'calories_burned', value: string) => {
     setWorkoutInputs((prev) => ({
       ...prev,
       [date]: {
@@ -145,16 +145,51 @@ export default function Dashboard() {
       const session = await supabase.auth.getSession();
       const user = session.data.session?.user;
       if (!user) throw new Error('Not authenticated');
+      // Get all exercise names (case-insensitive)
+      const exerciseNames = exercises.map(ex => ex.name).filter(Boolean);
+      // Fetch all exercises from DB (case-insensitive match)
+      const { data: exerciseData, error: exerciseError } = await supabase
+        .from('exercises')
+        .select('id, name')
+        .in('name', exerciseNames);
+      if (exerciseError) throw exerciseError;
+      // Create a map of lowercase name to ID
+      const exerciseNameToId = new Map();
+      exerciseData?.forEach(ex => {
+        exerciseNameToId.set(ex.name.toLowerCase(), ex.id);
+      });
+      // For each exercise, ensure it exists in DB (case-insensitive)
+      const getOrCreateExerciseId = async (ex: any) => {
+        const nameKey = ex.name.toLowerCase();
+        if (exerciseNameToId.has(nameKey)) {
+          return exerciseNameToId.get(nameKey);
+        }
+        // Not found, create it
+        const { data: newEx, error: insertError } = await supabase
+          .from('exercises')
+          .insert({ name: ex.name, category: ex.category || '', muscle_groups: ex.muscle_groups || [], equipment_needed: ex.equipment_needed || [], difficulty_level: ex.difficulty || '', instructions: ex.instructions || '' })
+          .select('id')
+          .single();
+        if (insertError) throw insertError;
+        exerciseNameToId.set(nameKey, newEx.id);
+        return newEx.id;
+      };
       const calories = parseInt(workoutInputs[date]?.calories || '0', 10);
       const notes = workoutInputs[date]?.notes || '';
+      const weight_lifted = parseFloat(workoutInputs[date]?.weight_lifted || '0');
+      const calories_burned = parseFloat(workoutInputs[date]?.calories_burned || '0');
       // Save each exercise as a workout
       for (const ex of exercises) {
+        // Get or create exercise ID
+        const exerciseId = await getOrCreateExerciseId(ex);
         await supabase.from('user_workouts').insert({
           user_id: user.id,
-          exercise_id: ex.id || ex.name,
+          exercise_id: exerciseId,
           workout_date: date,
           notes,
-          // Optionally add sets, reps, etc.
+          weight_lifted: isNaN(weight_lifted) ? null : weight_lifted,
+          calories_burned: isNaN(calories_burned) ? null : calories_burned,
+          // Optionally add sets, reps, weight, duration_minutes if available
         });
       }
       toast({ title: 'Workout Tracked!', description: `Workout for ${date} marked as complete.` });

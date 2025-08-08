@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EnhancedExercise } from '@/types/fitness';
 import { AIGeneratedExercise } from '@/services/aiExerciseService';
+import { CategoryExercise } from '@/services/exerciseCategoryService';
 import { EnhancedExerciseCard } from '@/components/fitness/EnhancedExerciseCard';
 import { AIExerciseCard } from '@/components/fitness/AIExerciseCard';
 import { AIExerciseDetailModal } from '@/components/fitness/AIExerciseDetailModal';
@@ -17,7 +18,8 @@ import {
   CheckSquare, 
   Calendar,
   Target,
-  Loader2
+  Loader2,
+  Database
 } from 'lucide-react';
 import { startOfWeek, format } from 'date-fns';
 
@@ -28,6 +30,7 @@ interface CategoryExerciseModalProps {
   categoryDescription: string;
   dbExercises: EnhancedExercise[];
   aiExercises: AIGeneratedExercise[];
+  categoryExercises: CategoryExercise[];
   aiLoading: boolean;
   onRefreshAI: () => void;
 }
@@ -39,6 +42,7 @@ export function CategoryExerciseModal({
   categoryDescription,
   dbExercises,
   aiExercises,
+  categoryExercises,
   aiLoading,
   onRefreshAI
 }: CategoryExerciseModalProps) {
@@ -240,8 +244,15 @@ export function CategoryExerciseModal({
             </div>
 
             {/* Exercise Tabs */}
-            <Tabs defaultValue="ai-exercises" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+            <Tabs defaultValue="category-exercises" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="category-exercises" className="flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Category Exercises
+                  {categoryExercises.length > 0 && (
+                    <Badge variant="secondary">{categoryExercises.length}</Badge>
+                  )}
+                </TabsTrigger>
                 <TabsTrigger value="ai-exercises" className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
                   AI-Generated Exercises
@@ -250,13 +261,57 @@ export function CategoryExerciseModal({
                   )}
                 </TabsTrigger>
                 <TabsTrigger value="db-exercises" className="flex items-center gap-2">
-                  <Target className="h-4 w-4" />
+                  <Database className="h-4 w-4" />
                   Database Exercises
                   {dbExercises.length > 0 && (
                     <Badge variant="secondary">{dbExercises.length}</Badge>
                   )}
                 </TabsTrigger>
               </TabsList>
+
+              <TabsContent value="category-exercises" className="mt-6">
+                {aiLoading ? (
+                  <div className="text-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+                    <p className="text-gray-600">Loading category exercises...</p>
+                  </div>
+                ) : categoryExercises.length > 0 ? (
+                  <>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold">Category Exercises</h3>
+                      <Badge variant="outline" className="text-sm">
+                        {categoryExercises.length} exercises
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {categoryExercises.map((exercise) => (
+                        <div key={exercise.id} className="relative">
+                          <AIExerciseCard
+                            exercise={exercise}
+                            onViewDetails={setSelectedAIExercise}
+                          />
+                          <div className="absolute top-2 right-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedExercises.includes(exercise.id)}
+                              onChange={() => handleExerciseSelect(exercise.id)}
+                              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-12">
+                    <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Category Exercises</h3>
+                    <p className="text-gray-600 mb-4">
+                      No stored exercises found for this category. Check the AI-Generated tab for dynamic exercises.
+                    </p>
+                  </div>
+                )}
+              </TabsContent>
 
               <TabsContent value="ai-exercises" className="mt-6">
                 {aiLoading ? (
@@ -274,7 +329,9 @@ export function CategoryExerciseModal({
                       </Button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {aiExercises.map((exercise) => (
+                      {aiExercises.map((exercise) => {
+                        console.log(`🎯 Rendering AI Exercise: "${exercise.name}" (ID: ${exercise.id})`);
+                        return (
                         <div key={exercise.id} className="relative">
                           <AIExerciseCard
                             exercise={exercise}
@@ -289,7 +346,8 @@ export function CategoryExerciseModal({
                             />
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </>
                 ) : (

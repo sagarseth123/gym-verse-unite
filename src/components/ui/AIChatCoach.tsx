@@ -13,20 +13,59 @@ export function AIChatCoach() {
 
   const sendMessage = async () => {
     if (!input.trim()) return;
-    setMessages((prev) => [...prev, { role: 'user', text: input }]);
+    
+    const userMessage = input.trim();
+    setMessages((prev) => [...prev, { role: 'user', text: userMessage }]);
     setLoading(true);
     setInput('');
+    
     try {
-      const { data, error } = await supabase.functions.invoke('ai-chat-coach', {
-        body: { prompt: input },
+      // Set a timeout to handle request timeout gracefully
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+      // Use direct fetch instead of supabase.functions.invoke to have more control
+      const response = await fetch('http://127.0.0.1:54321/functions/v1/ai-chat-coach', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Origin': 'http://localhost:8080',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0"}`
+        },
+        body: JSON.stringify({ prompt: userMessage }),
+        signal: controller.signal,
+        mode: 'cors', // Explicitly set CORS mode
       });
-      if (error || data?.error) {
-        setMessages((prev) => [...prev, { role: 'ai', text: data?.error || error.message || 'AI error' }]);
+      
+      // Clear the timeout since the request completed
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText}`);
+      }
+      
+      const data = await response.json();
+      if (data.error) {
+        setMessages((prev) => [...prev, { role: 'ai', text: data.error || 'AI error' }]);
       } else {
         setMessages((prev) => [...prev, { role: 'ai', text: data.answer }]);
       }
     } catch (err: any) {
-      setMessages((prev) => [...prev, { role: 'ai', text: err.message || 'Failed to get AI response.' }]);
+      console.error('AI Chat Error:', err);
+      
+      // Handle specific errors with friendly messages
+      let errorMessage = 'Failed to get AI response.';
+      
+      if (err.name === 'AbortError') {
+        errorMessage = 'The request timed out. The server might be busy. Please try again in a moment.';
+      } else if (err.message.includes('NetworkError')) {
+        errorMessage = 'Network error. Please check your connection and make sure the server is running.';
+      } else if (err.message.includes('CORS')) {
+        errorMessage = 'CORS error. There might be an issue with server configuration.';
+      }
+      
+      setMessages((prev) => [...prev, { role: 'ai', text: errorMessage }]);
     } finally {
       setLoading(false);
       inputRef.current?.focus();

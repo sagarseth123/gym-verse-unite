@@ -23,6 +23,17 @@ import {
   Settings
 } from 'lucide-react';
 import { startOfWeek, format } from 'date-fns';
+import { defaultWeeklyPlan } from '@/content_generation/defaultWeeklyPlan';
+import { useEffect } from 'react';
+
+interface Exercise {
+  name: string;
+  sets: number;
+  reps: string;
+  rest: string;
+  imageUrl?: string;
+  muscle_groups?: string[];
+}
 
 interface FitnessPlan {
   weeklyPlan?: {
@@ -46,12 +57,7 @@ interface FitnessPlan {
     [key: string]: {
       type: string;
       duration: string;
-      exercises: Array<{
-        name: string;
-        sets: number;
-        reps: string;
-        rest: string;
-      }>;
+      exercises: Exercise[];
     };
   };
   progressTracking?: {
@@ -77,6 +83,108 @@ interface UserPreferences {
   specificGoals: string[];
 }
 
+// --- Backend exerciseMappings for image URL logic ---
+const exerciseMappings: { [key: string]: string } = {
+  // Push-ups variations
+  'push_ups': 'push_ups',
+  'pushup': 'push_ups',
+  'pushups': 'push_ups',
+  // Pull-ups variations
+  'pull_ups': 'pull_ups',
+  'pullup': 'pull_ups',
+  'pullups': 'pull_ups',
+  // Squats variations
+  'squats': 'squats',
+  'squat': 'squats',
+  'jump_squats': 'jump_squats',
+  'jump_squat': 'jump_squats',
+  'bodyweight_squats': 'squats',
+  'bodyweight_squat': 'squats',
+  'sumo_squat': 'sumo_deadlift',
+  'barbel_squat': 'back_squats',
+  'barbell_squat': 'back_squats',
+  'front_squat': 'front_squats',
+  // Bench press variations
+  'bench_press': 'bench_press',
+  'bench_presses': 'bench_press',
+  'barbell_bench_press': 'bench_press',
+  'chest_press': 'bench_press',
+  'chest_press_incline': 'incline_bench_press',
+  'chest_press_decline': 'decline_bench_press',
+  'pec_fly': 'chest_fly',
+  // Deadlift variations
+  'deadlift': 'deadlift',
+  'deadlifts': 'deadlift',
+  'barbell_deadlift': 'deadlift',
+  // Plank variations
+  'plank': 'plank',
+  'side_plank': 'side_plank',
+  // Crunches variations
+  'crunches': 'crunches',
+  'crunch': 'crunches',
+  // Leg raise
+  'leg_raise': 'leg_raises',
+  'leg_raises': 'leg_raises',
+  // Shoulder press
+  'shoulder_press': 'shoulder_press',
+  'shoulder_presses': 'shoulder_press',
+  // Lateral raise
+  'lateral_raise': 'lateral_raise',
+  // Tricep pushdown
+  'tricep_pushdown': 'tricep_pushdown',
+  // Overhead extension
+  'overhead_extension': 'overhead_extension',
+  // Lat pull down
+  'lat_pull_down': 'lat_pulldowns',
+  'lat_close_grip': 'lat_pulldowns',
+  'lat_machine': 'lat_pulldowns',
+  // Mid rowing
+  'mid_rowing': 'rows',
+  // Hyperextension
+  'hyperextension': 'superman',
+  // Biceps curl
+  'biceps_curl': 'dumbbell_curls',
+  'biceps_curl_barbel': 'dumbbell_curls',
+  'biceps_machine': 'dumbbell_curls',
+  // Hammer curl
+  'hammer_curl': 'dumbbell_curls',
+  // Barbell sides
+  'barbell_sides': 'barbell_sides',
+  // Dumbel sides
+  'dumbel_sides': 'dumbel_sides',
+  // Leg press
+  'leg_press': 'leg_press',
+  // Leg extension
+  'leg_extension': 'leg_extension',
+  // Leg curl
+  'leg_curl': 'leg_curl',
+  // Calves seated
+  'calves_seated': 'calf_raises',
+  // Calves standing
+  'calves_standing': 'calf_raises',
+  // Elliptical
+  'eliptical': 'elliptical',
+  // Cycling
+  'cycling': 'cycling',
+  // Front raise
+  'front_raise': 'front_raise',
+  // Rear delt
+  'rear_delt': 'rear_delt',
+  // Single head extension
+  'single_head_extension': 'overhead_extension',
+  // Triceps machine
+  'triceps_machine': 'tricep_pushdown',
+  // Chest fly
+  'chest_fly': 'chest_fly',
+};
+
+// Updated getExerciseImageUrl to use backend mapping
+const getExerciseImageUrl = (name: string) => {
+  const sanitized = name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+  const mapped = exerciseMappings[sanitized] || sanitized;
+  return `/images/exercise/${mapped}.png`;
+};
+
 export function AIFitnessPlanner() {
   const { user, profile, gymProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -96,7 +204,15 @@ export function AIFitnessPlanner() {
     injuries: [],
     specificGoals: []
   });
+  const [useDefaultPlan, setUseDefaultPlan] = useState(false);
+  // Set up default assignments with 'None' as the default value
+  const [defaultPlanAssignments, setDefaultPlanAssignments] = useState([
+    'None', 'None', 'None', 'None', 'None', 'None'
+  ]);
+  const [defaultRestDay, setDefaultRestDay] = useState('sunday');
   const navigate = useNavigate();
+  const [planType, setPlanType] = useState<'default' | 'ai'>('default');
+  const [imageLoading, setImageLoading] = useState<{ [key: string]: boolean }>({});
 
   const handleViewInWeeklyProgress = () => {
     // Small delay to ensure plan is saved
@@ -272,6 +388,11 @@ export function AIFitnessPlanner() {
       } else if (!Array.isArray(normalizedPlan.exercisePlan[day].exercises)) {
         normalizedPlan.exercisePlan[day].exercises = [];
       }
+      // Update imageUrl for each exercise
+      normalizedPlan.exercisePlan[day].exercises = normalizedPlan.exercisePlan[day].exercises.map((ex: any) => ({
+        ...ex,
+        imageUrl: getExerciseImageUrl(ex.name)
+      }));
     });
     return normalizedPlan;
   }
@@ -339,15 +460,75 @@ export function AIFitnessPlanner() {
                 </div>
                 <p className="text-sm text-gray-600 mb-3">Duration: {dayPlan.duration}</p>
                 {dayPlan.exercises && (
-                  <div className="space-y-2">
-                    {dayPlan.exercises.map((exercise, index) => (
-                      <div key={index} className="bg-gray-50 p-3 rounded text-sm">
-                        <div className="font-medium">{exercise.name}</div>
-                        <div className="text-gray-600">
-                          {exercise.sets} sets × {exercise.reps} | Rest: {exercise.rest}
+                  <div className="space-y-3">
+                    {dayPlan.exercises.map((exercise, index) => {
+                      const exerciseName = typeof exercise === 'string' ? exercise : exercise.name;
+                      const imageUrl = typeof exercise === 'object' && exercise.imageUrl ? exercise.imageUrl : getExerciseImageUrl(exerciseName);
+                      const imageKey = `${day}-${exerciseName}`;
+                      // Handler to generate image if not present
+                      const handleImageError = async (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                        setImageLoading(prev => ({ ...prev, [imageKey]: true }));
+                        try {
+                          const res = await fetch(`/api/exercise-image?name=${encodeURIComponent(exerciseName)}`);
+                          const data = await res.json();
+                          if (data.imageUrl) {
+                            if (e.currentTarget) e.currentTarget.src = data.imageUrl;
+                          } else {
+                            // If still not found, keep spinner for a moment then hide
+                            setTimeout(() => setImageLoading(prev => ({ ...prev, [imageKey]: false })), 1200);
+                          }
+                        } catch {
+                          setTimeout(() => setImageLoading(prev => ({ ...prev, [imageKey]: false })), 1200);
+                        }
+                      };
+                      const handleImageLoad = () => {
+                        setImageLoading(prev => ({ ...prev, [imageKey]: false }));
+                      };
+                      return (
+                        <div key={index} className="bg-white border rounded-lg overflow-hidden shadow-sm">
+                          <div className="flex">
+                            {/* Exercise Image */}
+                            <div className="w-24 h-24 flex items-center justify-center relative bg-white border">
+                              {imageLoading[imageKey] && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-10">
+                                  <Loader2 className="animate-spin h-8 w-8 text-blue-500" />
+                                </div>
+                              )}
+                              <img
+                                src={imageUrl}
+                                alt={exerciseName + ' exercise demonstration'}
+                                className="w-full h-full object-contain bg-white border"
+                                loading="lazy"
+                                onError={handleImageError}
+                                onLoad={handleImageLoad}
+                                style={imageLoading[imageKey] ? { opacity: 0.3 } : {}}
+                              />
+                            </div>
+                            {/* Exercise Details */}
+                            <div className="flex-1 p-3">
+                              <div className="font-medium text-sm">{exerciseName}</div>
+                              <div className="text-gray-600 text-xs mt-1">
+                                {typeof exercise !== 'string' ? `${exercise.sets} sets × ${exercise.reps} | Rest: ${exercise.rest}` : ''}
+                              </div>
+                              {typeof exercise !== 'string' && exercise.muscle_groups?.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {exercise.muscle_groups?.slice(0, 3).map((muscle, idx) => (
+                                    <Badge key={idx} variant="outline" className="text-xs">
+                                      {muscle}
+                                    </Badge>
+                                  ))}
+                                  {exercise.muscle_groups?.length > 3 && (
+                                    <Badge variant="outline" className="text-xs">
+                                      +{exercise.muscle_groups.length - 3}
+                                    </Badge>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -358,81 +539,225 @@ export function AIFitnessPlanner() {
     );
   };
 
+  // Show default plan if no plan exists or user selects it
+  useEffect(() => {
+    if (!fitnessPlans && !isLoading) {
+      setUseDefaultPlan(true);
+    }
+  }, [fitnessPlans, isLoading]);
+
+  // Helper to get image URL for an exercise name
+  const getExerciseImageUrl = (name: string) => {
+    // Use the same logic as your backend mapping, or import if available
+    const sanitized = name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+    return `/images/exercise/${sanitized}.png`;
+  };
+
+  // UI for assigning days and rest day for default plan
+  const renderDefaultPlanAssignment = () => {
+    const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+    return (
+      <div className="mb-4">
+        <div className="mb-2 font-semibold">Assign each workout to a day:</div>
+        {defaultWeeklyPlan.map((plan, idx) => (
+          <div key={plan.name + idx} className="flex items-center mb-2">
+            <span className="w-40">{plan.name}</span>
+            <select
+              className="border rounded px-2 py-1 ml-2"
+              value={defaultPlanAssignments[idx]}
+              onChange={e => {
+                const newAssignments = [...defaultPlanAssignments];
+                newAssignments[idx] = e.target.value;
+                setDefaultPlanAssignments(newAssignments);
+              }}
+            >
+              <option value="None">None</option>
+              {days.filter(d => d !== defaultRestDay && !defaultPlanAssignments.includes(d) || defaultPlanAssignments[idx] === d).map(day => (
+                <option key={day} value={day}>{day.charAt(0).toUpperCase() + day.slice(1)}</option>
+              ))}
+            </select>
+          </div>
+        ))}
+        <div className="mt-4">
+          <span className="font-semibold">Select your rest day: </span>
+          <select
+            className="border rounded px-2 py-1 ml-2"
+            value={defaultRestDay}
+            onChange={e => setDefaultRestDay(e.target.value)}
+          >
+            {days.map(day => (
+              <option key={day} value={day}>{day.charAt(0).toUpperCase() + day.slice(1)}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+    );
+  };
+
+  const saveDefaultPlanToWeeklyProgress = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to save your plan.",
+        variant: "destructive"
+      });
+      return;
+    }
+    // Prevent saving if any workout is not assigned
+    if (defaultPlanAssignments.includes('None')) {
+      toast({
+        title: "Assign All Workouts",
+        description: "Please assign each workout to a day before saving.",
+        variant: "destructive"
+      });
+      return;
+    }
+    // Build the plan object in the same format as AI plan
+    const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+    const plan: any = {};
+    defaultPlanAssignments.forEach((day, idx) => {
+      plan[day] = {
+        type: defaultWeeklyPlan[idx].name,
+        duration: '45-60 min',
+        exercises: defaultWeeklyPlan[idx].exercises.map(ex => ({
+          ...ex,
+          sets: 3,
+          reps: '10-15',
+          rest: '60s',
+        }))
+      };
+    });
+    // Fill in rest day
+    plan[defaultRestDay] = {
+      type: 'Rest',
+      duration: '',
+      exercises: []
+    };
+    // Fill in any missing days (shouldn't happen)
+    days.forEach(day => {
+      if (!plan[day]) plan[day] = { type: '', duration: '', exercises: [] };
+    });
+    // Save to Supabase
+    setIsLoading(true);
+    try {
+      const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+      const { error } = await supabase.from('user_weekly_plans').upsert({
+        user_id: user.id,
+        week_start: weekStart,
+        plan_data: { exercisePlan: plan }
+      }, { onConflict: 'user_id,week_start' });
+      if (error) throw error;
+      toast({
+        title: "Plan Saved!",
+        description: "Your most effective plan is now available in Weekly Progress and AI Coach.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Error Saving Plan",
+        description: err.message || 'Failed to save plan.',
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Render the default plan as a weekly plan
+  const renderDefaultWeeklyPlan = () => {
+    const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+    // Map assignments to days
+    const planByDay: { [key: string]: typeof defaultWeeklyPlan[0] | null } = {};
+    days.forEach(day => {
+      const idx = defaultPlanAssignments.indexOf(day);
+      planByDay[day] = idx !== -1 ? defaultWeeklyPlan[idx] : null;
+    });
+    return (
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Dumbbell className="h-5 w-5 text-blue-600" />
+            <CardTitle>Most Effective Weekly Plan</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button onClick={saveDefaultPlanToWeeklyProgress} disabled={isLoading} className="mb-4">
+            {isLoading ? 'Saving...' : 'Save This Plan'}
+          </Button>
+          {days.map(day => (
+            <div key={day} className="p-4 border rounded-lg bg-gray-50">
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-semibold capitalize">{day}</h4>
+                {day === defaultRestDay ? (
+                  <Badge variant="destructive">Rest Day</Badge>
+                ) : (
+                  <Badge variant="outline">{planByDay[day]?.name || ''}</Badge>
+                )}
+              </div>
+              {day !== defaultRestDay && planByDay[day] && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(planByDay[day]?.exercises as { name: string; imageUrl: string }[]).map((exercise, idx) => {
+                    const exerciseName = exercise.name;
+                    const imageUrl = exercise.imageUrl || getExerciseImageUrl(exerciseName);
+                    return (
+                      <div key={exerciseName + idx} className="flex items-center space-x-4 p-2 bg-white border rounded shadow-sm">
+                        <div className="w-16 h-16 flex items-center justify-center bg-white border rounded">
+                          <img
+                            src={imageUrl}
+                            alt={exerciseName + ' exercise demonstration'}
+                            className="max-h-full max-w-full object-contain"
+                        onError={e => (e.currentTarget.style.display = 'none')}
+                      />
+                    </div>
+                        <span className="font-medium text-sm">{exerciseName}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
+            <div className="flex flex-col space-y-1">
             <div className="flex items-center space-x-2">
-              <Brain className="h-6 w-6 text-purple-600" />
-              <div>
-                <CardTitle>AI Fitness Planner</CardTitle>
-                <CardDescription>
-                  Generate a personalized diet and exercise plan based on your profile
-                </CardDescription>
-              </div>
+              <Brain className="h-5 w-5 text-purple-600" />
+              <CardTitle>AI Fitness Planner</CardTitle>
             </div>
-            <div className="flex space-x-2">
-              {error && (
-                <Button onClick={generatePlan} disabled={isLoading} variant="outline">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Retry
-                </Button>
-              )}
-              <Button onClick={() => setShowPreferences(!showPreferences)} variant="outline">
-                <Settings className="h-4 w-4 mr-2" />
-                Preferences
-              </Button>
-              <Button onClick={generatePlan} disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Target className="h-4 w-4 mr-2" />
-                    Generate Plan
-                  </>
-                )}
-              </Button>
+              <CardDescription>Get personalized diet and exercise recommendations powered by AI</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {!profile || !gymProfile ? (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Please complete your profile information to generate a personalized fitness plan.
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <p className="text-gray-600">Weight</p>
-                <p className="font-medium">{gymProfile.weight || 'Not set'} kg</p>
-              </div>
-              <div>
-                <p className="text-gray-600">Height</p>
-                <p className="font-medium">{gymProfile.height || 'Not set'} cm</p>
-              </div>
-              <div>
-                <p className="text-gray-600">Fitness Level</p>
-                <p className="font-medium capitalize">{gymProfile.fitness_level || 'Not set'}</p>
-              </div>
-              <div>
-                <p className="text-gray-600">Goals</p>
-                <p className="font-medium">{gymProfile.fitness_goals?.length || 0} set</p>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
+          {/* Plan Type Selection */}
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <Button
+              variant={planType === 'default' ? 'default' : 'outline'}
+              onClick={() => { setPlanType('default'); setUseDefaultPlan(true); setShowPreferences(false); }}
+            >
+              Use Most Effective Plan
+            </Button>
+            <Button
+              variant={planType === 'ai' ? 'default' : 'outline'}
+              onClick={() => { setPlanType('ai'); setUseDefaultPlan(false); setShowPreferences(true); }}
+            >
+              Generate a Custom Plan Using AI
+            </Button>
+          </div>
+          {/* Show default plan assignment if default selected */}
+          {planType === 'default' && useDefaultPlan && renderDefaultPlanAssignment()}
+          {/* Show preferences form if AI selected */}
+          {planType === 'ai' && showPreferences && (
+            <>
       {/* Preferences Form */}
-      {showPreferences && (
-        <Card>
+              <Card className="mb-6">
           <CardHeader>
             <div className="flex items-center space-x-2">
               <Settings className="h-5 w-5 text-blue-600" />
@@ -702,7 +1027,16 @@ export function AIFitnessPlanner() {
             </div>
           </CardContent>
         </Card>
+              <Button onClick={generatePlan} disabled={isLoading} className="mt-4">
+                {isLoading ? 'Generating...' : 'Generate AI Plan'}
+              </Button>
+            </>
       )}
+        </CardContent>
+      </Card>
+      {/* Show the selected plan */}
+      {planType === 'default' && useDefaultPlan ? renderDefaultWeeklyPlan() : null}
+      {planType === 'ai' && fitnessPlans ? renderExercisePlan() : null}
 
       {error && (
         <Alert variant="destructive">

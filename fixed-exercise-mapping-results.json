@@ -1,0 +1,1013 @@
+{
+  "timestamp": "2025-07-13T10:29:27.550Z",
+  "categories": [
+    {
+      "categoryId": "strength-building",
+      "categoryName": "Strength Training & Muscle Building",
+      "exerciseCount": 40,
+      "success": true,
+      "exercises": [
+        {
+          "name": "Barbell Back Squat (Batch 1)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Barbell Bench Press (Batch 1)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Conventional Deadlift (Batch 1)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Barbell Overhead Press (Batch 1)",
+          "imageUrl": "/images/exercise/barbell_overhead_press.png"
+        },
+        {
+          "name": "Barbell Bent-Over Rows (Batch 1)",
+          "imageUrl": "/images/exercise/rows.png"
+        },
+        {
+          "name": "Pull-ups (Batch 1)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Dips (Parallel Bars) (Batch 1)",
+          "imageUrl": "/images/exercise/parallel_bar_dips.png"
+        },
+        {
+          "name": "Dumbbell Bicep Curls (Batch 1)",
+          "imageUrl": "/images/exercise/biceps_curl.png"
+        },
+        {
+          "name": "Cable Flyes (Batch 1)",
+          "imageUrl": "/images/exercise/cable_chest_flyes.png"
+        },
+        {
+          "name": "Leg Press (Batch 1)",
+          "imageUrl": "/images/exercise/leg_press.png"
+        },
+        {
+          "name": "Barbell Back Squats (Batch 2)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Dumbbell Bench Press (Batch 2)",
+          "imageUrl": "/images/exercise/incline_dumbbell_press.png"
+        },
+        {
+          "name": "Pull-ups (Batch 2)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Barbell Rows (Batch 2)",
+          "imageUrl": "/images/exercise/rows.png"
+        },
+        {
+          "name": "Overhead Press (Barbell) (Batch 2)",
+          "imageUrl": "/images/exercise/shoulder_press.png"
+        },
+        {
+          "name": "Romanian Deadlifts (Batch 2)",
+          "imageUrl": "/images/exercise/barbell_romanian_deadlift_rdl.png"
+        },
+        {
+          "name": "Dumbbell Bicep Curls (Batch 2)",
+          "imageUrl": "/images/exercise/biceps_curl.png"
+        },
+        {
+          "name": "Cable Triceps Pushdowns (Batch 2)",
+          "imageUrl": "/images/exercise/tricep_pushdown.png"
+        },
+        {
+          "name": "Deadlifts (Barbell) (Batch 2)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Bulgarian Split Squats (Batch 2)",
+          "imageUrl": "/images/exercise/lunges.png"
+        },
+        {
+          "name": "Barbell Back Squat (Batch 3)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Barbell Bench Press (Batch 3)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Barbell Bent-Over Row (Batch 3)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Barbell Overhead Press (Batch 3)",
+          "imageUrl": "/images/exercise/barbell_overhead_press.png"
+        },
+        {
+          "name": "Conventional Deadlift (Batch 3)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Pull-Ups (Batch 3)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Parallel Bar Dips (Batch 3)",
+          "imageUrl": "/images/exercise/parallel_bar_dips.png"
+        },
+        {
+          "name": "Dumbbell Bicep Curl (Batch 3)",
+          "imageUrl": "/images/exercise/biceps_curl.png"
+        },
+        {
+          "name": "Cable Flyes (Batch 3)",
+          "imageUrl": "/images/exercise/cable_chest_flyes.png"
+        },
+        {
+          "name": "Leg Press (Batch 3)",
+          "imageUrl": "/images/exercise/leg_press.png"
+        },
+        {
+          "name": "Barbell Back Squat (Batch 4)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Barbell Bench Press (Batch 4)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Barbell Bent-Over Row (Batch 4)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Dumbbell Overhead Press (Batch 4)",
+          "imageUrl": "/images/exercise/shoulder_press.png"
+        },
+        {
+          "name": "Romanian Deadlift (Batch 4)",
+          "imageUrl": "/images/exercise/barbell_romanian_deadlift_rdl.png"
+        },
+        {
+          "name": "Pull-ups (Batch 4)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Dips (weighted) (Batch 4)",
+          "imageUrl": "/images/exercise/weighted_dips.png"
+        },
+        {
+          "name": "Cable Flyes (Batch 4)",
+          "imageUrl": "/images/exercise/cable_chest_flyes.png"
+        },
+        {
+          "name": "Barbell Bicep Curls (Batch 4)",
+          "imageUrl": "/images/exercise/dumbbell_curls.png"
+        },
+        {
+          "name": "Cable Triceps Pushdowns (Batch 4)",
+          "imageUrl": "/images/exercise/tricep_pushdown.png"
+        }
+      ]
+    },
+    {
+      "categoryId": "weight-loss",
+      "categoryName": "Weight Loss & Fat Burning",
+      "exerciseCount": 40,
+      "success": true,
+      "exercises": [
+        {
+          "name": "Barbell Back Squat (Batch 1)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Dumbbell Bench Press (Batch 1)",
+          "imageUrl": "/images/exercise/incline_dumbbell_press.png"
+        },
+        {
+          "name": "Barbell Deadlift (Batch 1)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Pull-ups (Batch 1)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Overhead Press (Barbell) (Batch 1)",
+          "imageUrl": "/images/exercise/shoulder_press.png"
+        },
+        {
+          "name": "Dumbbell Rows (Batch 1)",
+          "imageUrl": "/images/exercise/seated_cable_rows.png"
+        },
+        {
+          "name": "Cable Face Pulls (Batch 1)",
+          "imageUrl": "/images/exercise/cable_face_pulls.png"
+        },
+        {
+          "name": "Leg Press (Batch 1)",
+          "imageUrl": "/images/exercise/leg_press.png"
+        },
+        {
+          "name": "Incline Dumbbell Curl (Batch 1)",
+          "imageUrl": "/images/exercise/jumping_jacks.png"
+        },
+        {
+          "name": "Triceps Pushdowns (Cable) (Batch 1)",
+          "imageUrl": "/images/exercise/tricep_pushdown.png"
+        },
+        {
+          "name": "Barbell Back Squat (Batch 2)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Barbell Bench Press (Batch 2)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Bent-Over Barbell Row (Batch 2)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Overhead Barbell Press (Batch 2)",
+          "imageUrl": "/images/exercise/overhead_press_barbell.png"
+        },
+        {
+          "name": "Conventional Deadlift (Batch 2)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Pull-ups (Batch 2)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Parallel Bar Dips (Batch 2)",
+          "imageUrl": "/images/exercise/parallel_bar_dips.png"
+        },
+        {
+          "name": "Dumbbell Bicep Curl (Batch 2)",
+          "imageUrl": "/images/exercise/biceps_curl.png"
+        },
+        {
+          "name": "Cable Face Pull (Batch 2)",
+          "imageUrl": "/images/exercise/cable_face_pulls.png"
+        },
+        {
+          "name": "Leg Press (Batch 2)",
+          "imageUrl": "/images/exercise/leg_press.png"
+        },
+        {
+          "name": "Barbell Back Squat (Batch 3)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Barbell Bench Press (Batch 3)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Barbell Bent-Over Row (Batch 3)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Dumbbell Overhead Press (Batch 3)",
+          "imageUrl": "/images/exercise/shoulder_press.png"
+        },
+        {
+          "name": "Romanian Deadlift (Batch 3)",
+          "imageUrl": "/images/exercise/barbell_romanian_deadlift_rdl.png"
+        },
+        {
+          "name": "Pull-ups (Batch 3)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Dips (parallel bars) (Batch 3)",
+          "imageUrl": "/images/exercise/parallel_bar_dips.png"
+        },
+        {
+          "name": "Cable Rows (Batch 3)",
+          "imageUrl": "/images/exercise/seated_cable_rows.png"
+        },
+        {
+          "name": "Leg Press (Batch 3)",
+          "imageUrl": "/images/exercise/leg_press.png"
+        },
+        {
+          "name": "Dumbbell Lateral Raises (Batch 3)",
+          "imageUrl": "/images/exercise/shoulder_press.png"
+        },
+        {
+          "name": "Barbell Back Squat (Batch 4)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Barbell Bench Press (Batch 4)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Bent-Over Barbell Rows (Batch 4)",
+          "imageUrl": "/images/exercise/rows.png"
+        },
+        {
+          "name": "Overhead Barbell Press (Batch 4)",
+          "imageUrl": "/images/exercise/overhead_press_barbell.png"
+        },
+        {
+          "name": "Conventional Deadlift (Batch 4)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Pull-ups (Batch 4)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Parallel Bar Dips (Batch 4)",
+          "imageUrl": "/images/exercise/parallel_bar_dips.png"
+        },
+        {
+          "name": "Dumbbell Bicep Curls (Batch 4)",
+          "imageUrl": "/images/exercise/biceps_curl.png"
+        },
+        {
+          "name": "Cable Face Pulls (Batch 4)",
+          "imageUrl": "/images/exercise/cable_face_pulls.png"
+        },
+        {
+          "name": "Leg Press (Batch 4)",
+          "imageUrl": "/images/exercise/leg_press.png"
+        }
+      ]
+    },
+    {
+      "categoryId": "calisthenics",
+      "categoryName": "Calisthenics & Bodyweight",
+      "exerciseCount": 40,
+      "success": true,
+      "exercises": [
+        {
+          "name": "Barbell Back Squat (Batch 1)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Dumbbell Bench Press (Batch 1)",
+          "imageUrl": "/images/exercise/incline_dumbbell_press.png"
+        },
+        {
+          "name": "Barbell Bent-Over Row (Batch 1)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Overhead Press (Barbell) (Batch 1)",
+          "imageUrl": "/images/exercise/shoulder_press.png"
+        },
+        {
+          "name": "Pull-ups (Batch 1)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Deadlifts (Barbell) (Batch 1)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Cable Face Pulls (Batch 1)",
+          "imageUrl": "/images/exercise/cable_face_pulls.png"
+        },
+        {
+          "name": "Dumbbell Lunges (Batch 1)",
+          "imageUrl": "/images/exercise/dumbbell_lunges.png"
+        },
+        {
+          "name": "Incline Dumbbell Curl (Batch 1)",
+          "imageUrl": "/images/exercise/jumping_jacks.png"
+        },
+        {
+          "name": "Cable Triceps Pushdowns (Batch 1)",
+          "imageUrl": "/images/exercise/tricep_pushdown.png"
+        },
+        {
+          "name": "Barbell Back Squat (Batch 2)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Dumbbell Bench Press (Batch 2)",
+          "imageUrl": "/images/exercise/incline_dumbbell_press.png"
+        },
+        {
+          "name": "Barbell Bent-Over Row (Batch 2)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Overhead Press (Barbell) (Batch 2)",
+          "imageUrl": "/images/exercise/shoulder_press.png"
+        },
+        {
+          "name": "Pull-ups (Batch 2)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Dumbbell Rows (Batch 2)",
+          "imageUrl": "/images/exercise/seated_cable_rows.png"
+        },
+        {
+          "name": "Cable Flyes (Batch 2)",
+          "imageUrl": "/images/exercise/cable_chest_flyes.png"
+        },
+        {
+          "name": "Leg Press (Batch 2)",
+          "imageUrl": "/images/exercise/leg_press.png"
+        },
+        {
+          "name": "Bicep Cable Curls (Batch 2)",
+          "imageUrl": "/images/exercise/dumbbell_curls.png"
+        },
+        {
+          "name": "Triceps Pushdowns (Batch 2)",
+          "imageUrl": "/images/exercise/tricep_pushdown.png"
+        },
+        {
+          "name": "Barbell Back Squat (Batch 3)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Dumbbell Bench Press (Batch 3)",
+          "imageUrl": "/images/exercise/incline_dumbbell_press.png"
+        },
+        {
+          "name": "Barbell Bent-Over Row (Batch 3)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Overhead Press (Barbell) (Batch 3)",
+          "imageUrl": "/images/exercise/shoulder_press.png"
+        },
+        {
+          "name": "Pull-ups (Batch 3)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Dumbbell Rows (Batch 3)",
+          "imageUrl": "/images/exercise/seated_cable_rows.png"
+        },
+        {
+          "name": "Cable Flyes (Batch 3)",
+          "imageUrl": "/images/exercise/cable_chest_flyes.png"
+        },
+        {
+          "name": "Leg Press (Batch 3)",
+          "imageUrl": "/images/exercise/leg_press.png"
+        },
+        {
+          "name": "Lat Pulldowns (Batch 3)",
+          "imageUrl": "/images/exercise/lat_pulldowns.png"
+        },
+        {
+          "name": "Barbell Deadlift (Batch 3)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Barbell Back Squat (Batch 4)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Dumbbell Bench Press (Batch 4)",
+          "imageUrl": "/images/exercise/incline_dumbbell_press.png"
+        },
+        {
+          "name": "Pull-ups (Batch 4)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Barbell Bent-Over Rows (Batch 4)",
+          "imageUrl": "/images/exercise/rows.png"
+        },
+        {
+          "name": "Overhead Press (Barbell) (Batch 4)",
+          "imageUrl": "/images/exercise/shoulder_press.png"
+        },
+        {
+          "name": "Dumbbell Romanian Deadlifts (RDLs) (Batch 4)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Cable Face Pulls (Batch 4)",
+          "imageUrl": "/images/exercise/cable_face_pulls.png"
+        },
+        {
+          "name": "Incline Dumbbell Curls (Batch 4)",
+          "imageUrl": "/images/exercise/dumbbell_curls.png"
+        },
+        {
+          "name": "Triceps Pushdowns (Batch 4)",
+          "imageUrl": "/images/exercise/tricep_pushdown.png"
+        },
+        {
+          "name": "Deadlifts (Barbell) (Batch 4)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        }
+      ]
+    },
+    {
+      "categoryId": "bulking",
+      "categoryName": "Bulking & Mass Gain",
+      "exerciseCount": 40,
+      "success": true,
+      "exercises": [
+        {
+          "name": "Barbell Back Squat (Batch 1)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Barbell Bench Press (Batch 1)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Bent-Over Barbell Row (Batch 1)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Overhead Barbell Press (Batch 1)",
+          "imageUrl": "/images/exercise/overhead_press_barbell.png"
+        },
+        {
+          "name": "Conventional Deadlift (Batch 1)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Pull-ups (Batch 1)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Dips (Parallel Bars) (Batch 1)",
+          "imageUrl": "/images/exercise/parallel_bar_dips.png"
+        },
+        {
+          "name": "Dumbbell Bicep Curl (Batch 1)",
+          "imageUrl": "/images/exercise/biceps_curl.png"
+        },
+        {
+          "name": "Cable Flyes (Batch 1)",
+          "imageUrl": "/images/exercise/cable_chest_flyes.png"
+        },
+        {
+          "name": "Leg Press (Batch 1)",
+          "imageUrl": "/images/exercise/leg_press.png"
+        },
+        {
+          "name": "Barbell Back Squat (Batch 2)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Barbell Bench Press (Batch 2)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Barbell Bent-Over Row (Batch 2)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Barbell Overhead Press (Batch 2)",
+          "imageUrl": "/images/exercise/barbell_overhead_press.png"
+        },
+        {
+          "name": "Conventional Deadlift (Batch 2)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Pull-ups (Batch 2)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Parallel Bar Dips (Batch 2)",
+          "imageUrl": "/images/exercise/parallel_bar_dips.png"
+        },
+        {
+          "name": "Dumbbell Bicep Curl (Batch 2)",
+          "imageUrl": "/images/exercise/biceps_curl.png"
+        },
+        {
+          "name": "Cable Face Pull (Batch 2)",
+          "imageUrl": "/images/exercise/cable_face_pulls.png"
+        },
+        {
+          "name": "Leg Press (Batch 2)",
+          "imageUrl": "/images/exercise/leg_press.png"
+        },
+        {
+          "name": "Barbell Back Squat (Batch 3)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Dumbbell Bench Press (Batch 3)",
+          "imageUrl": "/images/exercise/incline_dumbbell_press.png"
+        },
+        {
+          "name": "Barbell Bent-Over Row (Batch 3)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Overhead Press (Barbell) (Batch 3)",
+          "imageUrl": "/images/exercise/shoulder_press.png"
+        },
+        {
+          "name": "Pull-ups (Batch 3)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Deadlifts (Barbell) (Batch 3)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Cable Face Pulls (Batch 3)",
+          "imageUrl": "/images/exercise/cable_face_pulls.png"
+        },
+        {
+          "name": "Dumbbell Bicep Curls (Batch 3)",
+          "imageUrl": "/images/exercise/biceps_curl.png"
+        },
+        {
+          "name": "Cable Triceps Pushdowns (Batch 3)",
+          "imageUrl": "/images/exercise/tricep_pushdown.png"
+        },
+        {
+          "name": "Leg Press (Batch 3)",
+          "imageUrl": "/images/exercise/leg_press.png"
+        },
+        {
+          "name": "Barbell Back Squat (Batch 4)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Barbell Bench Press (Batch 4)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Barbell Bent-Over Row (Batch 4)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Barbell Overhead Press (Batch 4)",
+          "imageUrl": "/images/exercise/barbell_overhead_press.png"
+        },
+        {
+          "name": "Conventional Deadlift (Batch 4)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Pull-ups (Batch 4)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Dips (parallel bars) (Batch 4)",
+          "imageUrl": "/images/exercise/parallel_bar_dips.png"
+        },
+        {
+          "name": "One-Arm Dumbbell Row (Batch 4)",
+          "imageUrl": "/images/exercise/dumbbell_curls.png"
+        },
+        {
+          "name": "Dumbbell Bicep Curls (Batch 4)",
+          "imageUrl": "/images/exercise/biceps_curl.png"
+        },
+        {
+          "name": "Cable Flyes (Batch 4)",
+          "imageUrl": "/images/exercise/cable_chest_flyes.png"
+        }
+      ]
+    },
+    {
+      "categoryId": "functional",
+      "categoryName": "Functional Fitness",
+      "exerciseCount": 40,
+      "success": true,
+      "exercises": [
+        {
+          "name": "Barbell Back Squat (Batch 1)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Barbell Bench Press (Batch 1)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Barbell Bent-Over Row (Batch 1)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Dumbbell Shoulder Press (Batch 1)",
+          "imageUrl": "/images/exercise/dumbbell_shoulder_press.png"
+        },
+        {
+          "name": "Romanian Deadlift (RDL) (Batch 1)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Pull-ups (Batch 1)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Dips (parallel bars) (Batch 1)",
+          "imageUrl": "/images/exercise/parallel_bar_dips.png"
+        },
+        {
+          "name": "Cable Rows (Batch 1)",
+          "imageUrl": "/images/exercise/seated_cable_rows.png"
+        },
+        {
+          "name": "Leg Press (Batch 1)",
+          "imageUrl": "/images/exercise/leg_press.png"
+        },
+        {
+          "name": "Dumbbell Bicep Curls (Batch 1)",
+          "imageUrl": "/images/exercise/biceps_curl.png"
+        },
+        {
+          "name": "Barbell Back Squat (Batch 2)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Barbell Bench Press (Batch 2)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Barbell Bent-Over Row (Batch 2)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Barbell Overhead Press (Batch 2)",
+          "imageUrl": "/images/exercise/barbell_overhead_press.png"
+        },
+        {
+          "name": "Conventional Deadlift (Batch 2)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Pull-ups (Batch 2)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Dips (Batch 2)",
+          "imageUrl": "/images/exercise/dips.png"
+        },
+        {
+          "name": "Dumbbell Walking Lunges (Batch 2)",
+          "imageUrl": "/images/exercise/dumbbell_lunges.png"
+        },
+        {
+          "name": "Cable Flyes (Batch 2)",
+          "imageUrl": "/images/exercise/cable_chest_flyes.png"
+        },
+        {
+          "name": "Barbell Bicep Curls (Batch 2)",
+          "imageUrl": "/images/exercise/dumbbell_curls.png"
+        },
+        {
+          "name": "Barbell Back Squat (Batch 3)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Barbell Bench Press (Batch 3)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Barbell Bent-Over Row (Batch 3)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Barbell Overhead Press (Batch 3)",
+          "imageUrl": "/images/exercise/barbell_overhead_press.png"
+        },
+        {
+          "name": "Conventional Deadlift (Batch 3)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Pull-ups (Batch 3)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Parallel Bar Dips (Batch 3)",
+          "imageUrl": "/images/exercise/parallel_bar_dips.png"
+        },
+        {
+          "name": "Dumbbell Bicep Curl (Batch 3)",
+          "imageUrl": "/images/exercise/biceps_curl.png"
+        },
+        {
+          "name": "Cable Face Pull (Batch 3)",
+          "imageUrl": "/images/exercise/cable_face_pulls.png"
+        },
+        {
+          "name": "Leg Press (Batch 3)",
+          "imageUrl": "/images/exercise/leg_press.png"
+        },
+        {
+          "name": "Barbell Back Squat (Batch 4)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Barbell Bench Press (Batch 4)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Conventional Deadlift (Batch 4)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Barbell Overhead Press (Batch 4)",
+          "imageUrl": "/images/exercise/barbell_overhead_press.png"
+        },
+        {
+          "name": "Barbell Bent-Over Rows (Batch 4)",
+          "imageUrl": "/images/exercise/rows.png"
+        },
+        {
+          "name": "Pull-ups (Batch 4)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Dips (Batch 4)",
+          "imageUrl": "/images/exercise/dips.png"
+        },
+        {
+          "name": "Dumbbell Bicep Curls (Batch 4)",
+          "imageUrl": "/images/exercise/biceps_curl.png"
+        },
+        {
+          "name": "Cable Face Pulls (Batch 4)",
+          "imageUrl": "/images/exercise/cable_face_pulls.png"
+        },
+        {
+          "name": "Leg Press (Batch 4)",
+          "imageUrl": "/images/exercise/leg_press.png"
+        }
+      ]
+    },
+    {
+      "categoryId": "flexibility",
+      "categoryName": "Flexibility & Recovery",
+      "exerciseCount": 40,
+      "success": true,
+      "exercises": [
+        {
+          "name": "Barbell Back Squat (Batch 1)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Dumbbell Bench Press (Batch 1)",
+          "imageUrl": "/images/exercise/incline_dumbbell_press.png"
+        },
+        {
+          "name": "Barbell Bent-Over Row (Batch 1)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Overhead Press (Barbell) (Batch 1)",
+          "imageUrl": "/images/exercise/shoulder_press.png"
+        },
+        {
+          "name": "Pull-ups (Batch 1)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Deadlifts (Barbell) (Batch 1)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Cable Face Pulls (Batch 1)",
+          "imageUrl": "/images/exercise/cable_face_pulls.png"
+        },
+        {
+          "name": "Dumbbell Lunges (Batch 1)",
+          "imageUrl": "/images/exercise/dumbbell_lunges.png"
+        },
+        {
+          "name": "Triceps Pushdowns (Batch 1)",
+          "imageUrl": "/images/exercise/tricep_pushdown.png"
+        },
+        {
+          "name": "Bicep Curls (Dumbbells) (Batch 1)",
+          "imageUrl": "/images/exercise/dumbbell_curls.png"
+        },
+        {
+          "name": "Barbell Back Squat (Batch 2)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Barbell Bench Press (Batch 2)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Bent-Over Barbell Row (Batch 2)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Overhead Barbell Press (Batch 2)",
+          "imageUrl": "/images/exercise/overhead_press_barbell.png"
+        },
+        {
+          "name": "Conventional Deadlift (Batch 2)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Pull-ups (Batch 2)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Parallel Bar Dips (Batch 2)",
+          "imageUrl": "/images/exercise/parallel_bar_dips.png"
+        },
+        {
+          "name": "Dumbbell Bicep Curl (Batch 2)",
+          "imageUrl": "/images/exercise/biceps_curl.png"
+        },
+        {
+          "name": "Cable Face Pull (Batch 2)",
+          "imageUrl": "/images/exercise/cable_face_pulls.png"
+        },
+        {
+          "name": "Leg Press (Batch 2)",
+          "imageUrl": "/images/exercise/leg_press.png"
+        },
+        {
+          "name": "Barbell Back Squat (Batch 3)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Dumbbell Bench Press (Batch 3)",
+          "imageUrl": "/images/exercise/incline_dumbbell_press.png"
+        },
+        {
+          "name": "Barbell Bent-Over Row (Batch 3)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Overhead Press (Barbell) (Batch 3)",
+          "imageUrl": "/images/exercise/shoulder_press.png"
+        },
+        {
+          "name": "Pull-ups (Batch 3)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Dumbbell Romanian Deadlift (Batch 3)",
+          "imageUrl": "/images/exercise/barbell_romanian_deadlift_rdl.png"
+        },
+        {
+          "name": "Cable Face Pulls (Batch 3)",
+          "imageUrl": "/images/exercise/cable_face_pulls.png"
+        },
+        {
+          "name": "Incline Dumbbell Curl (Batch 3)",
+          "imageUrl": "/images/exercise/jumping_jacks.png"
+        },
+        {
+          "name": "Close-Grip Bench Press (Batch 3)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Leg Press (Batch 3)",
+          "imageUrl": "/images/exercise/leg_press.png"
+        },
+        {
+          "name": "Barbell Back Squat (Batch 4)",
+          "imageUrl": "/images/exercise/barbell_back_squat.png"
+        },
+        {
+          "name": "Dumbbell Bench Press (Batch 4)",
+          "imageUrl": "/images/exercise/incline_dumbbell_press.png"
+        },
+        {
+          "name": "Barbell Bent-Over Row (Batch 4)",
+          "imageUrl": "/images/exercise/bench_press.png"
+        },
+        {
+          "name": "Overhead Press (Barbell) (Batch 4)",
+          "imageUrl": "/images/exercise/shoulder_press.png"
+        },
+        {
+          "name": "Pull-ups (Batch 4)",
+          "imageUrl": "/images/exercise/pull_ups.png"
+        },
+        {
+          "name": "Deadlifts (Barbell) (Batch 4)",
+          "imageUrl": "/images/exercise/deadlift.png"
+        },
+        {
+          "name": "Cable Face Pulls (Batch 4)",
+          "imageUrl": "/images/exercise/cable_face_pulls.png"
+        },
+        {
+          "name": "Dumbbell Lunges (Batch 4)",
+          "imageUrl": "/images/exercise/dumbbell_lunges.png"
+        },
+        {
+          "name": "Incline Dumbbell Curls (Batch 4)",
+          "imageUrl": "/images/exercise/dumbbell_curls.png"
+        },
+        {
+          "name": "Triceps Pushdowns (Batch 4)",
+          "imageUrl": "/images/exercise/tricep_pushdown.png"
+        }
+      ]
+    }
+  ]
+}

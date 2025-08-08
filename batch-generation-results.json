@@ -1,0 +1,52 @@
+[
+  {
+    "name": "lateral_raise",
+    "imageUrl": "/images/exercise/lateral_raise.png",
+    "success": true
+  },
+  {
+    "name": "tricep_pushdown",
+    "imageUrl": "/images/exercise/tricep_pushdown.png",
+    "success": true
+  },
+  {
+    "name": "overhead_extension",
+    "imageUrl": "/images/exercise/overhead_extension.png",
+    "success": true
+  },
+  {
+    "name": "barbell_sides",
+    "imageUrl": "/images/exercise/barbell_sides.png",
+    "success": true
+  },
+  {
+    "name": "dumbel_sides",
+    "imageUrl": "/images/exercise/dumbel_sides.png",
+    "success": true
+  },
+  {
+    "name": "leg_extension",
+    "imageUrl": "/images/exercise/leg_extension.png",
+    "success": true
+  },
+  {
+    "name": "leg_curl",
+    "imageUrl": "/images/exercise/leg_curl.png",
+    "success": true
+  },
+  {
+    "name": "front_raise",
+    "imageUrl": "/images/exercise/front_raise.png",
+    "success": true
+  },
+  {
+    "name": "rear_delt",
+    "imageUrl": "/images/exercise/rear_delt.png",
+    "success": true
+  },
+  {
+    "name": "chest_fly",
+    "imageUrl": "/images/exercise/chest_fly.png",
+    "success": true
+  }
+]

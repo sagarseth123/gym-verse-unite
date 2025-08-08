@@ -19,11 +19,118 @@ interface ExerciseDetailModalProps {
 export function ExerciseDetailModal({ exercise, isOpen, onClose }: ExerciseDetailModalProps) {
   const [aiGuidance, setAiGuidance] = useState<ExerciseGuidance | null>(null);
   const [loading, setLoading] = useState(false);
+  const [currentExerciseId, setCurrentExerciseId] = useState<string>('');
   const { toast } = useToast();
 
-  const fetchAIGuidance = async () => {
-    if (aiGuidance || loading) return;
+  // Utility function to get exercise image URL
+  const getExerciseImageUrl = (exerciseName: string) => {
+    if (exercise.imageUrl) {
+      return exercise.imageUrl;
+    }
     
+    // Sanitize exercise name for URL
+    const sanitizedName = exerciseName.toLowerCase()
+      .replace(/[^a-z0-9]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
+    
+    // Common exercise name mappings for better matching
+    const exerciseMappings: { [key: string]: string } = {
+      // Push-ups variations
+      'push_ups': 'push_ups',
+      'pushup': 'push_ups',
+      
+      // Pull-ups variations
+      'pull_ups': 'pull_ups',
+      'pullup': 'pull_ups',
+      
+      // Squats variations
+      'squats': 'squats',
+      'squat': 'squats',
+      'jump_squats': 'squats',
+      'jump_squat': 'squats',
+      'jumping_squats': 'squats',
+      'jumping_squat': 'squats',
+      'bodyweight_squats': 'squats',
+      'bodyweight_squat': 'squats',
+      
+      // Bench press variations
+      'bench_press': 'bench_press',
+      'barbell_bench_press': 'bench_press',
+      
+      // Deadlift variations
+      'deadlift': 'deadlift',
+      'barbell_deadlift': 'deadlift',
+      
+      // Plank variations
+      'plank': 'plank',
+      'forearm_plank': 'plank',
+      
+      // Burpees variations
+      'burpees': 'burpees',
+      'burpee': 'burpees',
+      
+      // Lunges variations
+      'lunges': 'lunges',
+      'lunge': 'lunges',
+      'walking_lunges': 'lunges',
+      'reverse_lunges': 'lunges',
+      
+      // Mountain climbers variations
+      'mountain_climbers': 'mountain_climbers',
+      'mountain_climber': 'mountain_climbers',
+      
+      // Jumping jacks variations
+      'jumping_jacks': 'jumping_jacks',
+      'jumping_jack': 'jumping_jacks',
+      'jump_jacks': 'jumping_jacks',
+      'jump_jack': 'jumping_jacks',
+      
+      // Sit-ups variations
+      'sit_ups': 'sit_ups',
+      'situp': 'sit_ups',
+      'sit_up': 'sit_ups',
+      
+      // Crunches variations
+      'crunches': 'crunches',
+      'crunch': 'crunches',
+      
+      // Dumbbell curls variations
+      'dumbbell_curls': 'dumbbell_curls',
+      'dumbbell_curl': 'dumbbell_curls',
+      'bicep_curls': 'dumbbell_curls',
+      'bicep_curl': 'dumbbell_curls',
+      
+      // Shoulder press variations
+      'shoulder_press': 'shoulder_press',
+      'overhead_press': 'shoulder_press',
+      'military_press': 'shoulder_press',
+      
+      // Rows variations
+      'rows': 'rows',
+      'row': 'rows',
+      'barbell_rows': 'rows',
+      'dumbbell_rows': 'rows',
+      
+      // Lat pulldowns variations
+      'lat_pulldowns': 'lat_pulldowns',
+      'lat_pulldown': 'lat_pulldowns',
+      'pull_down': 'lat_pulldowns',
+      
+      // Leg press variations
+      'leg_press': 'leg_press'
+    };
+    
+    const matchedName = exerciseMappings[sanitizedName] || sanitizedName;
+    return `/images/exercise/${matchedName}.png`;
+  };
+
+  const fetchAIGuidance = async () => {
+    // Check if we already have guidance for this specific exercise
+    const exerciseId = exercise.id || exercise.name;
+    if ((aiGuidance && currentExerciseId === exerciseId) || loading) return;
+    
+    console.log(`🔍 Fetching AI guidance for exercise: ${exercise.name} (ID: ${exerciseId})`);
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-fitness-plan', {
@@ -43,7 +150,13 @@ export function ExerciseDetailModal({ exercise, isOpen, onClose }: ExerciseDetai
       if (error) throw error;
 
       if (data?.guidance) {
+        console.log(`✅ Received AI guidance for ${exercise.name}:`, {
+          instructions: data.guidance.instructions?.length || 0,
+          benefits: data.guidance.benefits?.length || 0,
+          firstInstruction: data.guidance.instructions?.[0]?.substring(0, 50) + '...'
+        });
         setAiGuidance(data.guidance);
+        setCurrentExerciseId(exerciseId);
       }
     } catch (error: any) {
       console.error('Error fetching AI guidance:', error);
@@ -61,6 +174,7 @@ export function ExerciseDetailModal({ exercise, isOpen, onClose }: ExerciseDetai
         modifications: ['Adjust weight or reps based on your fitness level'],
         safetyTips: ['Warm up before performing this exercise']
       });
+      setCurrentExerciseId(exerciseId);
     } finally {
       setLoading(false);
     }
@@ -68,12 +182,19 @@ export function ExerciseDetailModal({ exercise, isOpen, onClose }: ExerciseDetai
 
   useEffect(() => {
     if (isOpen) {
+      // Clear previous guidance when opening modal with a different exercise
+      const exerciseId = exercise.id || exercise.name;
+      if (currentExerciseId !== exerciseId) {
+        setAiGuidance(null);
+        setCurrentExerciseId('');
+      }
       fetchAIGuidance();
     }
-  }, [isOpen]);
+  }, [isOpen, exercise.id, exercise.name]);
 
   const handleRefreshGuidance = () => {
     setAiGuidance(null);
+    setCurrentExerciseId('');
     fetchAIGuidance();
   };
 
@@ -95,6 +216,27 @@ export function ExerciseDetailModal({ exercise, isOpen, onClose }: ExerciseDetai
         </DialogHeader>
 
         <div className="mt-4">
+          {/* Exercise Image */}
+          <div className="mb-6">
+            <div className="relative w-full h-64 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+              <img
+                src={getExerciseImageUrl(exercise.name)}
+                alt={`${exercise.name} exercise demonstration`}
+                className="max-h-60 max-w-full object-contain bg-white border"
+                loading="lazy"
+                onError={(e) => {
+                  console.warn(`Failed to load image for ${exercise.name}:`, e);
+                  e.currentTarget.src = '/images/default.png';
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+              <div className="absolute bottom-4 left-4 text-white">
+                <h3 className="text-xl font-semibold">{exercise.name}</h3>
+                <p className="text-sm opacity-90">{exercise.category}</p>
+              </div>
+            </div>
+          </div>
+
           {/* Exercise Overview */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <Card>

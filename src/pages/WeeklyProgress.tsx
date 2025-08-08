@@ -12,7 +12,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { FITNESS_GOAL_CATEGORIES, Exercise } from '@/types/fitness';
 import { ExerciseDetailModal } from '@/components/fitness/ExerciseDetailModal';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 
@@ -27,6 +27,7 @@ function getSupabaseFunctionUrl(functionName: string) {
 
 export default function WeeklyProgress() {
     const { user } = useAuth();
+    const { toast } = useToast();
     const [weeklyPlan, setWeeklyPlan] = useState<any>(null);
     const [trackLoading, setTrackLoading] = useState(true);
     const [trackError, setTrackError] = useState<string | null>(null);
@@ -224,26 +225,66 @@ export default function WeeklyProgress() {
     const saveWorkoutData = async (date: string, exercises: any[]) => {
         if (!user) return;
         try {
-            const workoutData = exercises
-                .filter(ex => (workoutTracking[ex.id || ex.name]?.sets || []).length > 0)
-                .map(ex => {
-                    const tracking = workoutTracking[ex.id || ex.name];
-                    const sets = tracking.sets || [];
-                    const totalReps = sets.reduce((sum, set) => sum + (Number(set.reps) || 0), 0);
-                    const totalWeight = sets.reduce((sum, set) => sum + ((Number(set.reps) || 0) * (Number(set.weight) || 0)), 0);
-                    const avgWeight = totalReps > 0 ? totalWeight / totalReps : 0;
-                    const totalDuration = sets.reduce((sum, set) => sum + (Number(set.duration) || 0), 0);
-                    return { user_id: user.id, exercise_id: ex.id || ex.name, workout_date: date, sets: sets.length, reps: totalReps, weight: avgWeight, duration: totalDuration, calories_burned: tracking.calories || 0, notes: tracking.notes || '', completed: true };
+            // Get all exercise names (case-insensitive)
+            const exerciseNames = exercises.map(ex => ex.name).filter(Boolean);
+            // Fetch all exercises from DB (case-insensitive match)
+            const { data: exerciseData, error: exerciseError } = await supabase
+                .from('exercises')
+                .select('id, name')
+                .in('name', exerciseNames);
+            if (exerciseError) throw exerciseError;
+            // Create a map of lowercase name to ID
+            const exerciseNameToId = new Map();
+            exerciseData?.forEach(ex => {
+                exerciseNameToId.set(ex.name.toLowerCase(), ex.id);
+            });
+            // For each exercise, ensure it exists in DB (case-insensitive)
+            const getOrCreateExerciseId = async (ex: any) => {
+                const nameKey = ex.name.toLowerCase();
+                if (exerciseNameToId.has(nameKey)) {
+                    return exerciseNameToId.get(nameKey);
+                }
+                // Not found, create it
+                const { data: newEx, error: insertError } = await supabase
+                    .from('exercises')
+                    .insert({ name: ex.name, category: ex.category || '', muscle_groups: ex.muscle_groups || [], equipment_needed: ex.equipment_needed || [], difficulty_level: ex.difficulty || '', instructions: ex.instructions || '' })
+                    .select('id')
+                    .single();
+                if (insertError) throw insertError;
+                exerciseNameToId.set(nameKey, newEx.id);
+                return newEx.id;
+            };
+            // Build workout data
+            const workoutData = [];
+            for (const ex of exercises) {
+                if ((workoutTracking[ex.id || ex.name]?.sets || []).length === 0) continue;
+                const tracking = workoutTracking[ex.id || ex.name];
+                const sets = tracking.sets || [];
+                const totalReps = sets.reduce((sum, set) => sum + (Number(set.reps) || 0), 0);
+                const totalWeight = sets.reduce((sum, set) => sum + ((Number(set.reps) || 0) * (Number(set.weight) || 0)), 0);
+                const avgWeight = totalReps > 0 ? totalWeight / totalReps : 0;
+                const totalDuration = sets.reduce((sum, set) => sum + (Number(set.duration) || 0), 0);
+                // Get or create exercise ID
+                const exerciseId = await getOrCreateExerciseId(ex);
+                workoutData.push({
+                    user_id: user.id,
+                    exercise_id: exerciseId,
+                    workout_date: date,
+                    sets: sets.length,
+                    reps: totalReps,
+                    weight: avgWeight,
+                    weight_lifted: totalWeight,
+                    duration_minutes: totalDuration,
+                    calories_burned: tracking.calories || 0,
+                    notes: tracking.notes || ''
                 });
-
+            }
             if (workoutData.length === 0) {
                 toast({ title: "No data to save", description: "Track at least one set for an exercise." });
                 return;
             }
-
             const { error } = await supabase.from('user_workouts').upsert(workoutData, { onConflict: 'user_id,exercise_id,workout_date' });
             if (error) throw error;
-
             toast({ title: 'Workout Saved!', description: `Workout for ${date} has been saved successfully.` });
             fetchPlanAndWorkouts();
         } catch (err: any) {
@@ -254,12 +295,12 @@ export default function WeeklyProgress() {
     const getExerciseDetails = (ex: any): Exercise => ({
         id: ex.id || ex.name,
         name: ex.name,
+        category: ex.category || 'General',
         muscle_groups: ex.muscle_groups || [],
-        equipment: ex.equipment,
-        difficulty: ex.difficulty,
+        equipment_needed: ex.equipment_needed || ex.equipment || [],
         instructions: ex.instructions || [],
-        video_url: ex.video_url,
-        image_url: ex.image_url,
+        difficulty_level: ex.difficulty_level || ex.difficulty,
+        imageUrl: ex.imageUrl, // Add the imageUrl property for the modal
     });
     
     const weekStartDate = startOfWeek(new Date(), { weekStartsOn: 1 });
@@ -331,11 +372,27 @@ export default function WeeklyProgress() {
                                                     const trackingInfo = workoutTracking[exerciseId];
                                                     return (
                                                         <div key={index} className="p-4 border rounded-lg bg-white shadow-sm">
-                                                            <div className="grid grid-cols-[1fr_auto] gap-4 items-start">
-                                                                <div>
+                                                            <div className="flex gap-4 items-start">
+                                                                {/* Exercise Image */}
+                                                                {ex.imageUrl && (
+                                                                    <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden">
+                                                                        <img
+                                                                            src={ex.imageUrl}
+                                                                            alt={`${details.name} exercise demonstration`}
+                                                                            className="w-full h-full object-cover"
+                                                                            loading="lazy"
+                                                                            onError={(e) => {
+                                                                                e.currentTarget.style.display = 'none';
+                                                                            }}
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                                
+                                                                {/* Exercise Details */}
+                                                                <div className="flex-1">
                                                                     <p className="font-semibold">{details.name}</p>
                                                                     <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                                                                        <Dumbbell className="h-3 w-3" /><span>{details.equipment}</span><span className="text-gray-300">|</span><Target className="h-3 w-3" /><span>{details.muscle_groups?.join(', ')}</span>
+                                                                        <Dumbbell className="h-3 w-3" /><span>{details.equipment_needed?.join(', ')}</span><span className="text-gray-300">|</span><Target className="h-3 w-3" /><span>{details.muscle_groups?.join(', ')}</span>
                                                                     </div>
                                                                     {showWorkoutForm[exerciseId] ? (
                                                                         <div className="mt-4 p-4 bg-gray-100 rounded-lg">
@@ -371,12 +428,12 @@ export default function WeeklyProgress() {
                                                                         </div>
                                                                     )}
                                                                 </div>
-                                                                <div className="flex flex-col gap-2">
-                                                                    <Button size="sm" variant="outline" onClick={() => { setSelectedExercise(details); setExerciseModalOpen(true); }}>Details</Button>
-                                                                    <Button size="sm" onClick={() => {setShowWorkoutForm(prev => ({ ...prev, [exerciseId]: true })); if (!workoutTracking[exerciseId]) addSet(exerciseId);}}>
-                                                                        { (trackingInfo?.sets || []).length > 0 ? 'Edit' : 'Track Workout' }
-                                                                    </Button>
-                                                                </div>
+                                                            </div>
+                                                            <div className="flex justify-end gap-2 mt-3">
+                                                                <Button size="sm" variant="outline" onClick={() => { setSelectedExercise(details); setExerciseModalOpen(true); }}>Details</Button>
+                                                                <Button size="sm" onClick={() => {setShowWorkoutForm(prev => ({ ...prev, [exerciseId]: true })); if (!workoutTracking[exerciseId]) addSet(exerciseId);}}>
+                                                                    { (trackingInfo?.sets || []).length > 0 ? 'Edit' : 'Track Workout' }
+                                                                </Button>
                                                             </div>
                                                         </div>
                                                     );

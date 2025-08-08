@@ -1,0 +1,44 @@
+[
+  {
+    "category": "Strength Training & Muscle Building",
+    "status": "success",
+    "count": 5,
+    "exercisesWithImages": 5,
+    "exercisesWithoutImages": 0
+  },
+  {
+    "category": "Weight Loss & Fat Burning",
+    "status": "success",
+    "count": 5,
+    "exercisesWithImages": 5,
+    "exercisesWithoutImages": 0
+  },
+  {
+    "category": "Calisthenics & Bodyweight",
+    "status": "success",
+    "count": 5,
+    "exercisesWithImages": 5,
+    "exercisesWithoutImages": 0
+  },
+  {
+    "category": "Bulking & Mass Gain",
+    "status": "success",
+    "count": 5,
+    "exercisesWithImages": 5,
+    "exercisesWithoutImages": 0
+  },
+  {
+    "category": "Functional Fitness",
+    "status": "success",
+    "count": 5,
+    "exercisesWithImages": 5,
+    "exercisesWithoutImages": 0
+  },
+  {
+    "category": "Flexibility & Recovery",
+    "status": "success",
+    "count": 5,
+    "exercisesWithImages": 5,
+    "exercisesWithoutImages": 0
+  }
+]

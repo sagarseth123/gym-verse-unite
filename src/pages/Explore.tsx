@@ -12,6 +12,7 @@ import { FITNESS_GOAL_CATEGORIES, FitnessGoalCategory } from '@/types/fitness';
 import { GoalCategoryCard } from '@/components/fitness/GoalCategoryCard';
 import { CategoryExerciseModal } from '@/components/fitness/CategoryExerciseModal';
 import { AIExerciseService, AIGeneratedExercise } from '@/services/aiExerciseService';
+import { ExerciseCategoryService, CategoryExercise } from '@/services/exerciseCategoryService';
 import { useExerciseHistory } from '@/hooks/useExerciseHistory';
 import { useExercisePreferences } from '@/hooks/useExercisePreferences';
 
@@ -29,6 +30,7 @@ export default function Explore() {
     category: FitnessGoalCategory;
     dbExercises: EnhancedExercise[];
     aiExercises: AIGeneratedExercise[];
+    categoryExercises: CategoryExercise[];
   } | null>(null);
   const [personalizedExercises, setPersonalizedExercises] = useState<AIGeneratedExercise[]>([]);
   const [showPersonalized, setShowPersonalized] = useState(false);
@@ -94,13 +96,25 @@ export default function Explore() {
     setCurrentCategoryData({
       category,
       dbExercises,
-      aiExercises: []
+      aiExercises: [],
+      categoryExercises: []
     });
     setCategoryModalOpen(true);
     
-    // Load AI exercises for this category
+    // Load stored category exercises first
     setAiLoading(true);
     try {
+      const categoryExercises = await ExerciseCategoryService.getExercisesForCategory(category.id);
+      
+      if (categoryExercises.length > 0) {
+        console.log(`Found ${categoryExercises.length} stored exercises for ${category.name}`);
+        setCurrentCategoryData(prev => prev ? {
+          ...prev,
+          categoryExercises: categoryExercises
+        } : null);
+      } else {
+        console.log(`No stored exercises found for ${category.name}, generating new ones...`);
+        // Fallback to AI generation if no stored exercises
       const cachedExercises = await AIExerciseService.getCachedExercises(category.id);
       
       if (cachedExercises.length > 0) {
@@ -118,12 +132,13 @@ export default function Explore() {
           title: "AI Exercises Generated!",
           description: `Generated ${generatedExercises.length} personalized exercises for ${category.name}`,
         });
+        }
       }
     } catch (error: any) {
-      console.error('Error loading AI exercises:', error);
+      console.error('Error loading exercises:', error);
       toast({
         title: "Error",
-        description: "Failed to load AI exercises. Please try again.",
+        description: "Failed to load exercises. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -401,6 +416,7 @@ export default function Explore() {
           categoryDescription={currentCategoryData.category.description}
           dbExercises={currentCategoryData.dbExercises}
           aiExercises={currentCategoryData.aiExercises}
+          categoryExercises={currentCategoryData.categoryExercises}
           aiLoading={aiLoading}
           onRefreshAI={handleRefreshAIExercises}
         />

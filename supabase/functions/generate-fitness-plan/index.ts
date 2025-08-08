@@ -2,16 +2,162 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { config } from './config.ts';
+import { corsHeaders, handleCors } from '../_shared/cors.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// Utility to generate exercise image URL using a mapping approach
+async function getExerciseImageUrl(name: string, description: string = '') {
+  try {
+    // Sanitize exercise name for URL
+    const sanitizedName = name.toLowerCase()
+      .replace(/[^a-z0-9]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
+    
+    // Common exercise name mappings for better matching
+    const exerciseMappings: { [key: string]: string } = {
+      // Push-ups variations
+      'push_ups': 'push_ups',
+      'pushup': 'push_ups',
+      'pushups': 'push_ups',
+      // Pull-ups variations
+      'pull_ups': 'pull_ups',
+      'pullup': 'pull_ups',
+      'pullups': 'pull_ups',
+      // Squats variations
+      'squats': 'squats',
+      'squat': 'squats',
+      'jump_squats': 'jump_squats',
+      'jump_squat': 'jump_squats',
+      'bodyweight_squats': 'squats',
+      'bodyweight_squat': 'squats',
+      'sumo_squat': 'sumo_deadlift',
+      'barbel_squat': 'back_squats',
+      'barbell_squat': 'back_squats',
+      'front_squat': 'front_squats',
+      // Bench press variations
+      'bench_press': 'bench_press',
+      'bench_presses': 'bench_press',
+      'barbell_bench_press': 'bench_press',
+      'chest_press': 'bench_press',
+      'chest_press_incline': 'incline_bench_press',
+      'chest_press_decline': 'decline_bench_press',
+      'pec_fly': 'chest_fly',
+      // Deadlift variations
+      'deadlift': 'deadlift',
+      'deadlifts': 'deadlift',
+      'barbell_deadlift': 'deadlift',
+      // Plank variations
+      'plank': 'plank',
+      'side_plank': 'side_plank',
+      // Crunches variations
+      'crunches': 'crunches',
+      'crunch': 'crunches',
+      // Leg raise
+      'leg_raise': 'leg_raises',
+      'leg_raises': 'leg_raises',
+      // Shoulder press
+      'shoulder_press': 'shoulder_press',
+      'shoulder_presses': 'shoulder_press',
+      // Lateral raise
+      'lateral_raise': 'lateral_raise',
+      // Tricep pushdown
+      'tricep_pushdown': 'tricep_pushdown',
+      // Overhead extension
+      'overhead_extension': 'overhead_extension',
+      // Lat pull down
+      'lat_pull_down': 'lat_pulldowns',
+      'lat_close_grip': 'lat_pulldowns',
+      'lat_machine': 'lat_pulldowns',
+      // Mid rowing
+      'mid_rowing': 'rows',
+      // Hyperextension
+      'hyperextension': 'superman',
+      // Biceps curl
+      'biceps_curl': 'dumbbell_curls',
+      'biceps_curl_barbel': 'dumbbell_curls',
+      'biceps_machine': 'dumbbell_curls',
+      // Hammer curl
+      'hammer_curl': 'dumbbell_curls',
+      // Barbell sides
+      'barbell_sides': 'barbell_sides',
+      // Dumbel sides
+      'dumbel_sides': 'dumbel_sides',
+      // Leg press
+      'leg_press': 'leg_press',
+      // Leg extension
+      'leg_extension': 'leg_extension',
+      // Leg curl
+      'leg_curl': 'leg_curl',
+      // Calves seated
+      'calves_seated': 'calf_raises',
+      // Calves standing
+      'calves_standing': 'calf_raises',
+      // Elliptical
+      'eliptical': 'elliptical',
+      // Cycling
+      'cycling': 'cycling',
+      // Front raise
+      'front_raise': 'front_raise',
+      // Rear delt
+      'rear_delt': 'rear_delt',
+      // Single head extension
+      'single_head_extension': 'overhead_extension',
+      // Triceps machine
+      'triceps_machine': 'tricep_pushdown',
+      // Chest fly
+      'chest_fly': 'chest_fly',
+    };
+    
+    // Try to find a matching exercise name
+    const matchedName = exerciseMappings[sanitizedName] || sanitizedName;
+    const imageUrl = `/images/exercise/${matchedName}.png`;
+    
+    // Check if the image exists by trying to validate it
+    const imageExists = await validateImageUrl(imageUrl);
+    if (imageExists) {
+      return imageUrl;
+    } else {
+      // If the specific image doesn't exist, return default
+      console.warn(`Image not found for exercise: ${name}, using default image`);
+      return '/images/default.png';
+    }
+  } catch (err) {
+    console.warn(`Failed to get image URL for ${name}:`, err);
+    return '/images/default.png';
+  }
+}
+
+// Function to validate image URL (basic check)
+async function validateImageUrl(url: string): Promise<boolean> {
+  try {
+    // For serverless functions, we can't easily validate relative URLs
+    // Instead, we'll use a simple approach based on available images
+    const availableImages = [
+      'push_ups', 'pull_ups', 'squats', 'bench_press', 'deadlift', 'plank',
+      'burpees', 'lunges', 'mountain_climbers', 'jumping_jacks', 'sit_ups',
+      'crunches', 'dumbbell_curls', 'shoulder_press', 'rows', 'lat_pulldowns', 'leg_press',
+      'cycling', 'elliptical', 'leg_raises', 'superman', 'calf_raises', 'incline_bench_press',
+      'decline_bench_press', 'back_squats', 'front_squats', 'sumo_deadlift', 'side_plank',
+      // Add new images as you generate them:
+      'lateral_raise', 'tricep_pushdown', 'overhead_extension', 'barbell_sides', 'dumbel_sides',
+      'leg_extension', 'leg_curl', 'front_raise', 'rear_delt', 'chest_fly'
+    ];
+    // Extract the image name from the URL
+    const imageName = url.replace('/images/exercise/', '').replace('.png', '');
+    return availableImages.includes(imageName);
+  } catch (error) {
+    console.warn(`Failed to validate image URL: ${url}`, error);
+    return false;
+  }
+}
 
 serve(async (req) => {
   let allowedNames: string[] = [];
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  
+  // Handle CORS preflight requests
+  const corsResponse = handleCors(req);
+  if (corsResponse) {
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   try {
@@ -25,66 +171,69 @@ serve(async (req) => {
     let prompt = '';
     
     if (type === 'exercise_guidance') {
+      // Create a more specific and detailed prompt for each exercise
+      const exerciseName = exercise.name || 'Unknown Exercise';
+      const category = exercise.category || 'General';
+      const muscleGroups = exercise.muscle_groups?.join(', ') || 'Multiple muscle groups';
+      const difficulty = exercise.difficulty_level || 'Intermediate';
+      const equipment = exercise.equipment_needed?.join(', ') || 'Bodyweight';
+      const existingInstructions = exercise.existing_instructions || 'None provided';
+      
       prompt = `
-Generate comprehensive exercise guidance for the following exercise:
+You are a certified personal trainer and fitness expert. Generate comprehensive, SPECIFIC guidance for the exercise: "${exerciseName}".
 
-Exercise Name: ${exercise.name}
-Category: ${exercise.category}
-Target Muscles: ${exercise.muscle_groups?.join(', ') || 'Not specified'}
-Difficulty: ${exercise.difficulty_level || 'Not specified'}
-Equipment: ${exercise.equipment_needed?.join(', ') || 'Not specified'}
-Existing Instructions: ${exercise.existing_instructions || 'None provided'}
+EXERCISE DETAILS:
+- Name: ${exerciseName}
+- Category: ${category}
+- Primary Muscles: ${muscleGroups}
+- Difficulty Level: ${difficulty}
+- Equipment Needed: ${equipment}
+- Current Instructions: ${existingInstructions}
 
-IMPORTANT: Output must be valid JSON. All values must be strings, numbers, or arrays. No unquoted words, no comments, no trailing commas. If a value is a phrase (like AMRAP), put it in double quotes.
+CRITICAL REQUIREMENTS:
+1. Make ALL guidance SPECIFIC to "${exerciseName}" - do NOT provide generic advice
+2. Reference the specific muscles (${muscleGroups}) in benefits and instructions
+3. Consider the difficulty level (${difficulty}) when providing progressions
+4. Account for equipment (${equipment}) in modifications
+5. Output must be valid JSON with NO comments, NO trailing commas
 
-Please provide detailed guidance in the following format (respond with a JSON object):
+Generate a JSON object with this exact structure:
 
 {
   "instructions": [
-    "Step 1: Detailed instruction...",
-    "Step 2: Next step...",
-    // Continue with 5-8 detailed steps
+    "Step 1: [Specific step for ${exerciseName}]",
+    "Step 2: [Next specific step for ${exerciseName}]",
+    "Step 3: [Continue with 5-8 detailed steps specific to ${exerciseName}]"
   ],
   "benefits": [
-    "Primary benefit related to muscle building/strength...",
-    "Secondary benefit for functional movement...",
-    "Benefit for specific fitness goals...",
-    // 4-6 key benefits
+    "[Specific benefit for ${muscleGroups} development]",
+    "[Functional benefit of ${exerciseName}]",
+    "[Performance benefit of ${exerciseName}]",
+    "[Health benefit specific to ${exerciseName}]"
   ],
   "commonMistakes": [
-    "Most common form error to avoid...",
-    "Safety mistake that could lead to injury...",
-    "Efficiency mistake that reduces effectiveness...",
-    // 3-5 common mistakes
+    "[Most common form error specific to ${exerciseName}]",
+    "[Safety mistake unique to ${exerciseName}]",
+    "[Efficiency mistake for ${exerciseName}]"
   ],
   "progressions": [
-    "Beginner progression or regression...",
-    "Intermediate advancement...",
-    "Advanced variation...",
-    // 3-4 progression options
+    "[Beginner variation of ${exerciseName}]",
+    "[Intermediate advancement for ${exerciseName}]",
+    "[Advanced version of ${exerciseName}]"
   ],
   "modifications": [
-    "Modification for limited mobility...",
-    "Equipment-free alternative...",
-    "Easier variation for beginners...",
-    // 3-4 modifications
+    "[Modification for ${exerciseName} with limited equipment]",
+    "[Easier variation of ${exerciseName}]",
+    "[Alternative for ${exerciseName} with injuries]"
   ],
   "safetyTips": [
-    "Critical safety point...",
-    "Warm-up recommendation...",
-    "When to stop or rest...",
-    // 3-4 safety tips
+    "[Critical safety point for ${exerciseName}]",
+    "[Warm-up specific to ${exerciseName}]",
+    "[When to stop ${exerciseName}]"
   ]
 }
 
-Focus on:
-- Clear, actionable instructions
-- Specific benefits for muscle development and fitness goals
-- Practical safety advice
-- Evidence-based progressions
-- Accessible modifications
-
-Make sure the guidance is professional, accurate, and suitable for fitness enthusiasts of all levels.
+IMPORTANT: Every piece of guidance must be SPECIFIC to "${exerciseName}" and the ${muscleGroups} muscles. Do NOT provide generic fitness advice.
       `;
     } else {
       const goals = userProfile?.fitness_goals?.join(', ') || category || 'general fitness';
@@ -156,7 +305,26 @@ Format as a JSON object with this structure:
       `;
     }
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
+    // Gemini API call with retry logic
+    async function fetchWithRetry(url: string, options: RequestInit, retries = 3, delay = 1000): Promise<Response> {
+      let lastResponse: Response | undefined = undefined;
+      for (let attempt = 0; attempt < retries; attempt++) {
+        const response = await fetch(url, options);
+        lastResponse = response;
+        if (response.ok) return response;
+        if (response.status === 503 && attempt < retries - 1) {
+          // Wait before retrying
+          await new Promise(res => setTimeout(res, delay));
+          continue;
+        }
+        break;
+      }
+      if (!lastResponse) throw new Error('No response received from Gemini API');
+      return lastResponse;
+    }
+
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+    const fetchOptions: RequestInit = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -168,13 +336,15 @@ Format as a JSON object with this structure:
           }]
         }],
         generationConfig: {
-          temperature: 0.7,
+          temperature: 0.9,
           topK: 40,
           topP: 0.95,
           maxOutputTokens: 2048,
         }
       })
-    });
+    };
+
+    const response = await fetchWithRetry(geminiUrl, fetchOptions, 3, 1500);
 
     if (!response.ok) {
       const errorData = await response.text();
@@ -198,7 +368,7 @@ Format as a JSON object with this structure:
     const generatedText = data.candidates[0].content.parts[0].text;
 
     // Try to extract and parse JSON, even if it's in a code block
-    function parseGeminiPlan(raw) {
+    function parseGeminiPlan(raw: string) {
       let rawStr = raw.trim();
       if (rawStr.startsWith('```json')) rawStr = rawStr.slice(7);
       if (rawStr.startsWith('```')) rawStr = rawStr.slice(3);
@@ -229,6 +399,14 @@ Format as a JSON object with this structure:
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
+      } else {
+        return new Response(JSON.stringify({
+          error: 'Failed to parse exercise guidance',
+          success: false
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
     } else if (parsedResponse && parsedResponse.plan) {
       // After parsing the plan, filter out any exercises not in the allowed list as a safety net
@@ -241,6 +419,21 @@ Format as a JSON object with this structure:
           }
         }
       }
+      
+      // For each exercise, get the image URL
+      async function addImagesToPlan(plan: any) {
+        for (const day of Object.keys(plan)) {
+          if (Array.isArray(plan[day]?.exercises)) {
+            for (const ex of plan[day].exercises) {
+              ex.imageUrl = await getExerciseImageUrl(ex.name, ex.description || '');
+            }
+          }
+        }
+        return plan;
+      }
+
+      parsedResponse.plan = await addImagesToPlan(parsedResponse.plan);
+      
       // Normalized response
       let normalized = {
         exercisePlan: parsedResponse.plan,
@@ -265,8 +458,14 @@ Format as a JSON object with this structure:
 
   } catch (error) {
     console.error('Error in generate-fitness-plan function:', error);
+    let message = 'Unknown error';
+    if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as any).message === 'string') {
+      message = (error as any).message;
+    } else if (typeof error === 'string') {
+      message = error;
+    }
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: message,
       success: false 
     }), {
       status: 500,

@@ -2,19 +2,17 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { config } from './config.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, handleCors } from '../_shared/cors.ts';
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  // Handle CORS preflight requests
+  const corsResponse = handleCors(req);
+  if (corsResponse) {
+    return corsResponse;
   }
 
   try {
-    const { goalCategory, forceRefresh = false } = await req.json();
+    const { goalCategory, forceRefresh = false, exerciseCount = 25 } = await req.json();
     
     const { supabaseUrl, supabaseServiceKey, geminiApiKey } = config;
     if (!supabaseUrl || !supabaseServiceKey) {
@@ -77,7 +75,7 @@ serve(async (req) => {
 
     const categoryInfo = goalCategoryMap[goalCategory as keyof typeof goalCategoryMap] || goalCategoryMap['strength-building'];
 
-    const prompt = `Generate a comprehensive list of 25 exercises specifically designed for ${categoryInfo.name}.
+    const prompt = `Generate a comprehensive list of ${exerciseCount} exercises specifically designed for ${categoryInfo.name}.
 
 Focus on: ${categoryInfo.focus}
 Primary equipment: ${categoryInfo.equipment}
@@ -115,7 +113,7 @@ Requirements:
 6. Make exercises progressive and complementary
 7. Ensure all exercise names are unique and specific
 
-Generate 25 high-quality exercises that would form a comprehensive training system for someone focused on ${categoryInfo.name}.`;
+Generate ${exerciseCount} high-quality exercises that would form a comprehensive training system for someone focused on ${categoryInfo.name}.`;
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
@@ -157,15 +155,90 @@ Generate 25 high-quality exercises that would form a comprehensive training syst
     }
 
     const generatedText = data.candidates[0].content.parts[0].text;
+    console.log('Raw Gemini response:', generatedText.substring(0, 500) + '...');
     
+    // Try multiple parsing strategies
+    let parsedResponse = null;
+    
+    // Strategy 1: Try to find JSON object in the response
     try {
       const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        const parsedResponse = JSON.parse(jsonMatch[0]);
+        parsedResponse = JSON.parse(jsonMatch[0]);
+        console.log('Strategy 1 succeeded - found JSON object');
+      }
+    } catch (e: any) {
+      console.log('Strategy 1 failed:', e?.message || 'Unknown error');
+    }
+    
+    // Strategy 2: Try to extract JSON from code blocks
+    if (!parsedResponse) {
+      try {
+        const codeBlockMatch = generatedText.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+        if (codeBlockMatch) {
+          parsedResponse = JSON.parse(codeBlockMatch[1]);
+          console.log('Strategy 2 succeeded - found JSON in code block');
+        }
+      } catch (e: any) {
+        console.log('Strategy 2 failed:', e?.message || 'Unknown error');
+      }
+    }
+    
+    // Strategy 3: Try to clean up the response and parse
+    if (!parsedResponse) {
+      try {
+        let cleanedText = generatedText
+          .replace(/^[^{]*/, '') // Remove everything before first {
+          .replace(/[^}]*$/, '') // Remove everything after last }
+          .trim();
         
-        if (parsedResponse.exercises && Array.isArray(parsedResponse.exercises)) {
+        if (cleanedText.startsWith('{') && cleanedText.endsWith('}')) {
+          parsedResponse = JSON.parse(cleanedText);
+          console.log('Strategy 3 succeeded - cleaned text parsing');
+        }
+      } catch (e: any) {
+        console.log('Strategy 3 failed:', e?.message || 'Unknown error');
+      }
+    }
+    
+    // Strategy 4: Try to find the largest JSON object in the response
+    if (!parsedResponse) {
+      try {
+        const jsonMatches = generatedText.match(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g);
+        if (jsonMatches && jsonMatches.length > 0) {
+          // Find the largest JSON object
+          const largestMatch = jsonMatches.reduce((largest: string, current: string) => 
+            current.length > largest.length ? current : largest
+          );
+          parsedResponse = JSON.parse(largestMatch);
+          console.log('Strategy 4 succeeded - found largest JSON object');
+        }
+      } catch (e: any) {
+        console.log('Strategy 4 failed:', e?.message || 'Unknown error');
+      }
+    }
+    
+    // Strategy 5: Try to extract everything between the first { and last } (for large responses)
+    if (!parsedResponse) {
+      try {
+        const firstBrace = generatedText.indexOf('{');
+        const lastBrace = generatedText.lastIndexOf('}');
+        
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          const jsonText = generatedText.substring(firstBrace, lastBrace + 1);
+          parsedResponse = JSON.parse(jsonText);
+          console.log('Strategy 5 succeeded - extracted from first to last brace');
+        }
+      } catch (e: any) {
+        console.log('Strategy 5 failed:', e?.message || 'Unknown error');
+      }
+    }
+    
+    if (parsedResponse && parsedResponse.exercises && Array.isArray(parsedResponse.exercises)) {
+      console.log(`Successfully parsed ${parsedResponse.exercises.length} exercises`);
+      
           // Cache the generated exercises
-          const cachePromises = parsedResponse.exercises.map(exercise => 
+      const cachePromises = parsedResponse.exercises.map((exercise: any) => 
             supabase.from('ai_exercises_cache').insert({
               goal_category: goalCategory,
               exercise_name: exercise.name,
@@ -184,19 +257,16 @@ Generate 25 high-quality exercises that would form a comprehensive training syst
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
-        }
-      }
-    } catch (parseError) {
-      console.error('JSON parsing failed:', parseError);
-      throw new Error('Failed to parse AI response');
     }
     
-    throw new Error('No valid exercises generated');
+    // If all strategies failed, return error with raw text for debugging
+    console.error('All parsing strategies failed. Raw response:', generatedText);
+    throw new Error(`Failed to parse AI response. Raw text: ${generatedText.substring(0, 200)}...`);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in generate-ai-exercises function:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: error?.message || 'Unknown error',
       success: false 
     }), {
       status: 500,

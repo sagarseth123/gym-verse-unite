@@ -1,0 +1,47 @@
+{
+  "timestamp": "2025-07-23T13:00:15.151Z",
+  "categories": [
+    {
+      "categoryId": "strength-building",
+      "categoryName": "Strength Training & Muscle Building",
+      "exerciseCount": 0,
+      "success": false,
+      "error": "Failed to generate exercises"
+    },
+    {
+      "categoryId": "weight-loss",
+      "categoryName": "Weight Loss & Fat Burning",
+      "exerciseCount": 0,
+      "success": false,
+      "error": "Failed to generate exercises"
+    },
+    {
+      "categoryId": "calisthenics",
+      "categoryName": "Calisthenics & Bodyweight",
+      "exerciseCount": 0,
+      "success": false,
+      "error": "Failed to generate exercises"
+    },
+    {
+      "categoryId": "bulking",
+      "categoryName": "Bulking & Mass Gain",
+      "exerciseCount": 0,
+      "success": false,
+      "error": "Failed to generate exercises"
+    },
+    {
+      "categoryId": "functional",
+      "categoryName": "Functional Fitness",
+      "exerciseCount": 0,
+      "success": false,
+      "error": "Failed to generate exercises"
+    },
+    {
+      "categoryId": "flexibility",
+      "categoryName": "Flexibility & Recovery",
+      "exerciseCount": 0,
+      "success": false,
+      "error": "Failed to generate exercises"
+    }
+  ]
+}

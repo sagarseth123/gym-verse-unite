@@ -36,6 +36,30 @@ export type Database = {
         }
         Relationships: []
       }
+      category_exercises: {
+        Row: {
+          id: string
+          category_id: string
+          exercise_name: string
+          exercise_data: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          category_id: string
+          exercise_name: string
+          exercise_data: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          category_id?: string
+          exercise_name?: string
+          exercise_data?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
       exercises: {
         Row: {
           category: string
@@ -649,6 +673,8 @@ export type Database = {
           user_id: string
           weight: number | null
           workout_date: string
+          weight_lifted: number | null
+          calories_burned: number | null
         }
         Insert: {
           created_at?: string
@@ -661,6 +687,8 @@ export type Database = {
           user_id: string
           weight?: number | null
           workout_date?: string
+          weight_lifted?: number | null
+          calories_burned?: number | null
         }
         Update: {
           created_at?: string
@@ -673,6 +701,8 @@ export type Database = {
           user_id?: string
           weight?: number | null
           workout_date?: string
+          weight_lifted?: number | null
+          calories_burned?: number | null
         }
         Relationships: [
           {
